@@ -1,5 +1,5 @@
 # folders
+__pycache__
 
 # files
-*.pyc
 .env
