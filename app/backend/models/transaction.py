@@ -14,7 +14,9 @@ class Transaction(db.Model):  # type: ignore[name-defined, misc]
     subcategory = db.Column(db.String(100))
 
     name = db.Column(db.String(100))
-    description = db.Column(db.String(255))
+    concept = db.Column(db.String(255))
+    description = db.Column(db.Text)
+    bank_id = db.Column(db.String(255))
 
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
