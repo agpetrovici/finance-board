@@ -5,6 +5,7 @@ from flask import Flask
 from app.backend.config import Config
 from app.backend.models.db import db
 from app.backend.routes.dashboard.dashboard import bp as bp_dashboard
+from app.backend.routes.api.api import bp as bp_api
 
 
 def create_app(config_class: type[Config] = Config) -> Flask:
@@ -16,6 +17,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     # Blueprint registration
     app.register_blueprint(bp_dashboard)
+    app.register_blueprint(bp_api)
 
     # Create all tables
     with app.app_context():
