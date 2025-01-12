@@ -14,3 +14,8 @@ bp = Blueprint("dashboard", __name__, static_folder=static_folder, static_url_pa
 @bp.route("/", methods=["GET"])
 def get_dashboard() -> str:
     return render_template("dashboard/dashboard.html")
+
+
+@bp.route("/test-dashboard", methods=["GET"])
+def test_get_dashboard() -> str:
+    return render_template("dashboard/test_dashboard.html")
