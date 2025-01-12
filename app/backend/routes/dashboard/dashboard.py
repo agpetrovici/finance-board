@@ -6,5 +6,5 @@ bp = Blueprint("dashboard", __name__, static_folder="static", template_folder="t
 
 
 @bp.route("/", methods=["GET"])
-def get_dashboard():
-    return render_template("dashboard/index.html")
+def get_dashboard() -> str:
+    return render_template("dashboard/dashboard.html")
