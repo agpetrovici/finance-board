@@ -1,9 +1,9 @@
+import logging
 import os
 from decimal import Decimal
 from typing import List
 
 from flask import Blueprint, Response, jsonify
-
 
 from app.backend.models.db import db
 from app.backend.models.transaction import Transaction
@@ -27,7 +27,7 @@ def get_bank_statement() -> Response:
     for transaction_pk, month, balance in results:
         amounts.append(balance)
         labels.append(month.strftime("%Y-%m"))
-        print(f"Month: {month.strftime('%Y-%m')}, Balance: {balance}")
+        logging.info(f"Month: {month.strftime('%Y-%m')}, Balance: {balance}")
 
     # Prepare output
     datasets = [
