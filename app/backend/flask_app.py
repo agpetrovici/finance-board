@@ -21,6 +21,9 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     # Create all tables
     with app.app_context():
+        from app.backend.models.account import Account  # noqa: F401
+        from app.backend.models.transaction import Transaction  # noqa: F401
+
         db.create_all()
 
     return app
