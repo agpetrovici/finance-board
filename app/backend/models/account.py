@@ -6,6 +6,7 @@ class Account(db.Model):  # type: ignore[name-defined, misc]
 
     account_pk = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(100))
+    currency = db.Column(db.String(10))
     description = db.Column(db.String(255))
     bank_name = db.Column(db.String(100))
     account_number = db.Column(db.String(100))
