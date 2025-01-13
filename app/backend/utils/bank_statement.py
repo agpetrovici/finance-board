@@ -14,13 +14,14 @@ def get_monthly_transactions(session: scoped_session[Session]) -> Sequence[Row[A
             func.date_trunc("month", Transaction.date).label("month"),
             func.max(Transaction.transaction_pk).label("max_pk"),
         )
-        .group_by(func.date_trunc("month", Transaction.date))
+        .group_by(Transaction.account_fk, func.date_trunc("month", Transaction.date))
         .subquery()
     )
 
     # Main query
     query = (
         select(
+            Transaction.account_fk,
             Transaction.transaction_pk,
             func.date_trunc("month", Transaction.date).label("month"),
             Transaction.balance,

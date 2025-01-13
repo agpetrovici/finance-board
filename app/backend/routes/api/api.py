@@ -1,10 +1,11 @@
-import logging
 import os
+from datetime import datetime
 from decimal import Decimal
-from typing import List
+from typing import Dict, List
 
 from flask import Blueprint, Response, jsonify
 
+from app.backend.models.account import Account
 from app.backend.models.db import db
 from app.backend.models.transaction import Transaction
 from app.backend.utils.bank_statement import get_monthly_transactions
@@ -22,22 +23,47 @@ def get_bank_statement() -> Response:
     results = get_monthly_transactions(db.session)
 
     # Process results
-    amounts: List[Decimal] = list()
+    # Prepare amount by date
+    amount_by_date: Dict[datetime, Dict[int, Decimal]] = dict()
+    for transaction in results:
+        if transaction[2] not in amount_by_date:
+            amount_by_date[transaction[2]] = dict()
+        amount_by_date[transaction[2]][transaction[0]] = transaction[3]
+
+    # Prepare amount by account
     labels: List[str] = list()
-    for transaction_pk, month, balance in results:
-        amounts.append(balance)
-        labels.append(month.strftime("%Y-%m"))
-        logging.info(f"Month: {month.strftime('%Y-%m')}, Balance: {balance}")
+    accounts_data = Account.query.all()
+    accounts_pks = [account.account_pk for account in accounts_data]
+    amount_by_account: Dict[int, List[Decimal]] = {account_pk: list() for account_pk in accounts_pks}
+    amount_total: List[Decimal] = list()
+    for date, row in amount_by_date.items():
+        labels.append(date.strftime("%Y-%m"))
+        current_amount_subtotal = Decimal("0")
+        for account_fk in accounts_pks:
+            current_amount = row.get(account_fk, Decimal(0))
+            current_amount_subtotal += current_amount
+            amount_by_account[account_fk].append(current_amount)
+        amount_total.append(current_amount_subtotal)
 
     # Prepare output
     datasets = [
         {
-            "label": "Balance",
-            "data": amounts,
-            "borderColor": "rgb(75, 192, 192)",
+            "label": "Total",
+            "data": amount_total,
+            "borderColor": "#6EB5FF",
             "tension": 0.1,
         }
     ]
+
+    for account_pk, amounts in amount_by_account.items():
+        datasets.append(
+            {
+                "label": f"Account {account_pk}",
+                "data": amounts,
+                "borderColor": "rgb(75, 192, 192)",
+                "tension": 0.1,
+            }
+        )
 
     output = {
         "datasets": datasets,
