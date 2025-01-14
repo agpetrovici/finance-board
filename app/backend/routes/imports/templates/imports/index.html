@@ -11,7 +11,10 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Data import</h5>
-                    <canvas id="financeChart"></canvas>
+                    <ul>
+                        <li><a href="{{ url_for('imports.import_bbva') }}">BBVA</a></li>
+                        <li><a href="{{ url_for('imports.import_norma43') }}">Norma43</a></li>
+                    </ul>
                 </div>
             </div>
         </div>
