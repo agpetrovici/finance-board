@@ -122,6 +122,29 @@
             </ul>
         </div>
         <div class="flex-grow-1 p-3">
+            <nav style="--bs-breadcrumb-divider: url(&#34;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M2.5 0L1 1.5 3.5 4 1 6.5 2.5 8l4-4-4-4z' fill='%236c757d'/%3E%3C/svg%3E&#34;);"
+                aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    {% if request.path.endswith('/') %}
+                    {% set path = request.path[:-1] %}
+                    {% else %}
+                    {% set path = request.path %}
+                    {% endif %}
+                    {% set segments = path.split('/') %}
+                    {% set current_path = '' %}
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    {% for segment in segments %}
+                    {% if segment %}
+                    {% set current_path = current_path + '/' + segment %}
+                    {% if loop.last %}
+                    <li class="breadcrumb-item active" aria-current="page">{{ segment|title }}</li>
+                    {% else %}
+                    <li class="breadcrumb-item"><a href="{{ current_path }}">{{ segment|title }}</a></li>
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                </ol>
+            </nav>
             {% block content %}{% endblock %}
         </div>
     </main>
