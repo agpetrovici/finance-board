@@ -1,0 +1,8 @@
+{% macro generate_account_options(accounts) %}
+<select class="form-select" aria-label="Account select" id="account-pk">
+    <option value="" selected>Select the account to insert the data</option>
+    {% for account in accounts %}
+    <option value="{{ account.account_pk }}">{{ account.name }}</option>
+    {% endfor %}
+</select>
+{% endmacro %}
