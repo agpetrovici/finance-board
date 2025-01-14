@@ -14,4 +14,3 @@ async function importBBVA() {
 }
 
 document.querySelector("#bbva-import").addEventListener("click", importBBVA);
-
