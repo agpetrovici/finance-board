@@ -1,23 +1,23 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from app.backend.models.transaction import Transaction
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement
 
 
-def get_new_movements(data: dict[str, Any], last_bank_id: str, account_pk: int) -> list[Transaction]:
-    values = []
-    log_variables = False
-    last_ix = 0
+def get_new_movements(data: dict[str, Any], last_movement: Optional[Transaction], account_pk: int) -> list[Transaction]:
+    movements = []
+    get_movements = False
+    if last_movement is None:
+        get_movements = True
     for transaction in data["accountTransactions"][::-1]:
-        if log_variables:
-            last_ix += 1
+        if get_movements:
             pass
-        elif transaction["id"] == last_bank_id:
-            log_variables = True
+        elif isinstance(last_movement, Transaction) and transaction["id"] == last_movement.bank_id:
+            get_movements = True
             continue
-        if log_variables:
-            values.append(
+        if get_movements:
+            movements.append(
                 Transaction(
                     balance=transaction["balance"]["accountingBalance"]["amount"],
                     account_fk=account_pk,
@@ -30,7 +30,7 @@ def get_new_movements(data: dict[str, Any], last_bank_id: str, account_pk: int) 
                     bank_id=transaction["id"],
                 )
             )
-    return values
+    return movements
 
 
 def process_bbva(account_pk: int, data: dict[str, Any]) -> None:

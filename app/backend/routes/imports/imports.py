@@ -52,12 +52,12 @@ def import_bbva_process() -> tuple[Response, int]:
         return jsonify({"status": "error", "message": "Invalid JSON format."}), 400
 
     # First get the last movement in the database so I know from where to get the data from the dict
-    last_bank_id = get_last_movement(account_pk)
-    if last_bank_id is None:
+    last_movement = get_last_movement(account_pk)
+    if last_movement is None:
         return jsonify({"status": "error", "message": "No last bank id."}), 400
 
     # Then get the new movements from the dict
-    new_movements = get_new_movements(data, last_bank_id, account_pk)
+    new_movements = get_new_movements(data, last_movement, account_pk)
     if not new_movements:
         return jsonify({"status": "error", "message": "No new movements."}), 400
 
