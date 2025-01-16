@@ -8,7 +8,11 @@ class Account(db.Model):  # type: ignore[name-defined, misc]
     name = db.Column(db.String(100))
     currency = db.Column(db.String(10))
     description = db.Column(db.String(255))
+    # Bank account identification
     bank_name = db.Column(db.String(100))
+    bank_code = db.Column(db.String(8))
+    branch_code = db.Column(db.String(8))
+    control_digits = db.Column(db.String(10))
     account_number = db.Column(db.String(100))
 
     created_at = db.Column(db.DateTime, server_default=db.func.now())
