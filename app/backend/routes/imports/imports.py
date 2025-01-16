@@ -6,10 +6,10 @@ from flask import request
 
 from app.backend.models.account import Account
 from app.backend.models.db import db
+from app.backend.routes.imports.utils.bbva.process_bbva import get_new_movements
 from app.backend.routes.imports.utils.csb43.get_csb43_movements import get_new_movements_from_BankStatement
 from app.backend.routes.imports.utils.csb43.process_csb43 import parse_aes43
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement
-from app.backend.routes.imports.utils.process_bbva import get_new_movements
 
 bp = Blueprint(
     "imports",
