@@ -6,6 +6,8 @@ from flask import request
 
 from app.backend.models.account import Account
 from app.backend.models.db import db
+from app.backend.routes.imports.utils.csb43.get_csb43_movements import get_new_movements_from_BankStatement
+from app.backend.routes.imports.utils.csb43.process_csb43 import parse_aes43
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement
 from app.backend.routes.imports.utils.process_bbva import get_new_movements
 
@@ -101,3 +103,29 @@ def test_import_bbva_process() -> tuple[Response, int]:
 
     return jsonify({"status": "success", "message": f"Added {len(new_movements)} movements."}), 200
 
+
+@bp.route("/norma43", methods=["GET"])
+def import_norma43() -> str:
+    return render_template("imports/tpl_norma43.html")
+
+
+@bp.route("/from-norma43", methods=["POST"])
+def import_norma43_process() -> tuple[Response, int]:
+    try:
+        files = request.files
+        file = files["file"]
+        file_content: bytes = file.read()
+        bank_statement = parse_aes43(file_content)
+    except Exception:
+        return jsonify({"status": "error", "message": "Invalid file format."}), 400
+
+    status, messages, new_movements = get_new_movements_from_BankStatement(bank_statement)
+
+    if status:
+        # Then save the new movements to the database
+        db.session.add_all(new_movements)
+        db.session.commit()
+        messages.append(f"Added {len(new_movements)} movements in the db.")
+        return jsonify({"status": "success", "messages": messages}), 200
+    else:
+        return jsonify({"status": "error", "messages": messages}), 400
