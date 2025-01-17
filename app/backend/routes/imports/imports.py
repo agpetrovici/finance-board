@@ -4,9 +4,10 @@ from flask import Blueprint, Response
 from flask import render_template, jsonify
 from flask import request
 
-from app.backend.models.m_account import Account
 from app.backend.models.db import db
+from app.backend.models.m_account import Account
 from app.backend.routes.imports.utils.bbva.process_bbva import get_new_movements
+from app.backend.routes.imports.utils.binance.get_account_balance import get_account_balance
 from app.backend.routes.imports.utils.csb43.get_csb43_movements import get_new_movements_from_BankStatement
 from app.backend.routes.imports.utils.csb43.process_csb43 import parse_aes43
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement
@@ -129,3 +130,17 @@ def import_norma43_process() -> tuple[Response, int]:
         return jsonify({"status": "success", "messages": messages}), 200
     else:
         return jsonify({"status": "error", "messages": messages}), 400
+
+
+@bp.route("/binance")
+def import_binance() -> str:
+    return render_template("imports/tpl_binance.html")
+
+
+@bp.route("/from-binance", methods=["POST"])
+def import_from_binance() -> tuple[Response, int]:
+    try:
+        get_account_balance()
+        return jsonify({"status": "success", "message": "Account balance imported successfully."}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Account balance import failed: {e}."}), 400
