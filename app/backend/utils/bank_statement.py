@@ -1,4 +1,4 @@
-from typing import Any, Sequence
+from typing import Any, List, Sequence
 
 from flask_sqlalchemy.session import Session
 from sqlalchemy import func, select, Row
@@ -33,3 +33,9 @@ def get_monthly_transactions(session: scoped_session[Session]) -> Sequence[Row[A
     output = session.execute(query).all()
 
     return output
+
+
+def get_deposits() -> List[Deposit]:
+    deposits: List[Deposit] = Deposit.query.all()
+
+    return deposits
