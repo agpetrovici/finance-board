@@ -4,7 +4,8 @@ from flask_sqlalchemy.session import Session
 from sqlalchemy import func, select, Row
 from sqlalchemy.orm import scoped_session
 
-from app.backend.models.transaction import Transaction
+from app.backend.models.e_deposit import Deposit
+from app.backend.models.e_transaction import Transaction
 
 
 def get_monthly_transactions(session: scoped_session[Session]) -> Sequence[Row[Any]]:

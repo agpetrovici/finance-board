@@ -1,7 +1,7 @@
 from typing import Optional
 
 from app.backend.models.db import db
-from app.backend.models.transaction import Transaction
+from app.backend.models.e_transaction import Transaction
 
 
 def get_last_movement(account_pk: int) -> Optional[Transaction]:

@@ -1,8 +1,8 @@
 from decimal import Decimal
 from typing import List, Optional, Tuple
 
-from app.backend.models.account import Account
-from app.backend.models.transaction import Transaction
+from app.backend.models.m_account import Account
+from app.backend.models.e_transaction import Transaction
 from app.backend.routes.imports.utils.csb43.process_csb43 import BankStatement
 from app.backend.routes.imports.utils.csb43.process_csb43 import Transaction as TransactionCsb43
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement

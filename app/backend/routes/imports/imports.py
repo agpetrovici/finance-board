@@ -4,7 +4,7 @@ from flask import Blueprint, Response
 from flask import render_template, jsonify
 from flask import request
 
-from app.backend.models.account import Account
+from app.backend.models.m_account import Account
 from app.backend.models.db import db
 from app.backend.routes.imports.utils.bbva.process_bbva import get_new_movements
 from app.backend.routes.imports.utils.csb43.get_csb43_movements import get_new_movements_from_BankStatement

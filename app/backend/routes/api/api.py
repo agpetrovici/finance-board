@@ -5,9 +5,10 @@ from typing import Dict, List
 
 from flask import Blueprint, Response, jsonify
 
-from app.backend.models.account import Account
+from app.backend.models.m_account import Account
 from app.backend.models.db import db
-from app.backend.models.transaction import Transaction
+from app.backend.models.e_transaction import Transaction
+from app.backend.utils.bank_statement import get_deposits
 from app.backend.utils.bank_statement import get_monthly_transactions
 
 # Get the absolute path to the static folder

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Optional
 
-from app.backend.models.transaction import Transaction
+from app.backend.models.e_transaction import Transaction
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement
 
 
