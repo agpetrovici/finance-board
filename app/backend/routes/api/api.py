@@ -51,13 +51,13 @@ def get_bank_statement() -> Response:
     # Prepare amount by account
     labels: List[str] = list()
     accounts_data = Account.query.all()
-    accounts_pks = [account.account_pk for account in accounts_data]
+    accounts_pks = {account.account_pk: account for account in accounts_data}
     amount_by_account: Dict[int, List[Decimal]] = {account_pk: list() for account_pk in accounts_pks}
     amount_total: List[Decimal] = list()
     for date, row in amount_by_date.items():
         labels.append(date.strftime("%Y-%m"))
         current_amount_subtotal = Decimal("0")
-        for account_fk in accounts_pks:
+        for account_fk in accounts_pks.keys():
             current_amount = row.get(account_fk, Decimal("0"))
             current_amount_subtotal += current_amount
             amount_by_account[account_fk].append(current_amount)
@@ -76,7 +76,7 @@ def get_bank_statement() -> Response:
     for account_pk, amounts in amount_by_account.items():
         datasets.append(
             {
-                "label": f"Account {account_pk}",
+                "label": f"{accounts_pks[account_pk].name}",
                 "data": amounts,
                 "borderColor": "rgb(75, 192, 192)",
                 "tension": 0.1,
