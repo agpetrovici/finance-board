@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import Dict, List
 
 from flask import Blueprint, Response, jsonify
+from dateutil.rrule import rrule, MONTHLY
 
 from app.backend.models.m_account import Account
 from app.backend.models.db import db
@@ -21,15 +22,31 @@ bp = Blueprint("api", __name__, url_prefix="/api")
 @bp.route("/get-bank-statement", methods=["POST"])
 def get_bank_statement() -> Response:
     # Group transactions by date and calculate totals for last day of each month
-    results = get_monthly_transactions(db.session)
+    transactions = get_monthly_transactions(db.session)
+    deposits = get_deposits()
 
-    # Process results
     # Prepare amount by date
     amount_by_date: Dict[datetime, Dict[int, Decimal]] = dict()
-    for transaction in results:
-        if transaction[2] not in amount_by_date:
-            amount_by_date[transaction[2]] = dict()
+    # Prepare amount_by_date based on transaction and deposit data
+    min_transaction_date = min(transaction[2] for transaction in transactions)
+    max_transaction_date = max(transaction[2] for transaction in transactions)
+    min_deposit_date = min(deposit.date_start.replace(day=1) for deposit in deposits)
+    max_deposit_date = max(deposit.date_end.replace(day=1) for deposit in deposits)
+    min_date = min(min_transaction_date, min_deposit_date)
+    max_date = max(max_transaction_date, max_deposit_date)
+    for date in rrule(MONTHLY, dtstart=min_date, until=max_date):
+        if date not in amount_by_date:
+            amount_by_date[date] = dict()
+    # Add transaction data
+    for transaction in transactions:
         amount_by_date[transaction[2]][transaction[0]] = transaction[3]
+    # Add deposit data
+    for deposit in deposits:
+        deposit_date_start = deposit.date_start.replace(day=1)
+        deposit_date_end = deposit.date_end.replace(day=1)
+        for date in rrule(MONTHLY, dtstart=deposit_date_start, until=deposit_date_end):
+            amount_by_date[date][deposit.fk_account] = deposit.balance
+        amount_by_date[deposit_date_end][deposit.fk_account] = deposit.balance + deposit.interest_maturity
 
     # Prepare amount by account
     labels: List[str] = list()
@@ -41,7 +58,7 @@ def get_bank_statement() -> Response:
         labels.append(date.strftime("%Y-%m"))
         current_amount_subtotal = Decimal("0")
         for account_fk in accounts_pks:
-            current_amount = row.get(account_fk, Decimal(0))
+            current_amount = row.get(account_fk, Decimal("0"))
             current_amount_subtotal += current_amount
             amount_by_account[account_fk].append(current_amount)
         amount_total.append(current_amount_subtotal)
