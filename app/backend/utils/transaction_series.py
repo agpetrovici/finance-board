@@ -81,6 +81,14 @@ def get_transaction_series() -> Tuple[List[Category], List[str]]:
             if subcategory_data:
                 subcategories_data.append(Subcategory(name=subcategory, data=subcategory_data))
 
+        # Ensure all subcategories have data points for all dates
+        for subcategory in subcategories_data:
+            existing_dates = {dp.x for dp in subcategory.data}
+            for date in dates_sorted:
+                if date not in existing_dates:
+                    subcategory.data.append(DataPoint(x=date, y=Decimal("0"), tooltip=[]))
+            # Sort data points by date
+            subcategory.data.sort(key=lambda dp: dp.x)
         series.append(Category(category=category, data=subcategories_data))
 
     return series, dates_sorted
