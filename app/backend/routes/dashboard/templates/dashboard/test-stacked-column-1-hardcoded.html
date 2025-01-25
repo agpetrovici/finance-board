@@ -1,0 +1,134 @@
+<head>
+</head>
+
+<body>
+    <div id="chart1"></div>
+    <div id="chart2"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <script>
+        let categories = [
+            "2023-01-01",
+            "2023-01-02",
+            "2023-01-03",
+            "2023-01-04",
+            "2023-01-05",
+            "2023-01-06",
+            "2023-01-07",
+        ];
+
+        let series1 = [
+            {
+                name: "PRODUCT A",
+                data: [44, 55, 41, 67, 22, 43, 36],
+            },
+            {
+                name: "PRODUCT B",
+                data: [13, 23, 20, 8, 13, 27, 20],
+            },
+            {
+                name: "PRODUCT C",
+                data: [11, 17, 15, 15, 21, 14, 18],
+            },
+            {
+                name: "PRODUCT D",
+                data: [21, 7, 25, 13, 22, 8, 19],
+            },
+        ];
+
+        let series2 = [
+            {
+                name: "PRODUCT 1",
+                data: [44, 55, 41, 67, 22, 43, 36],
+            },
+            {
+                name: "PRODUCT 2",
+                data: [13, 23, 20, 8, 13, 27, 20],
+            },
+            {
+                name: "PRODUCT 3",
+                data: [11, 17, 15, 15, 21, 14, 18],
+            },
+        ];
+
+
+        // Chart 1 Options (Stacked Bar)
+        const options1 = {
+            chart: {
+                id: 'chart1',
+                type: 'bar',
+                height: 300,
+                stacked: true,
+                zoom: {
+                    enabled: true,
+                },
+                events: {
+                    zoomed: (chartContext, { xaxis }) => {
+                        chart2.updateOptions({
+                            xaxis: {
+                                min: xaxis.min,
+                                max: xaxis.max,
+                            },
+                        });
+                    },
+                    scrolled: (chartContext, { xaxis }) => {
+                        chart2.updateOptions({
+                            xaxis: {
+                                min: xaxis.min,
+                                max: xaxis.max,
+                            },
+                        });
+                    },
+                },
+            },
+            series: series1,
+            xaxis: {
+                type: 'datetime',
+                categories: categories,
+            },
+        };
+
+        // Chart 2 Options (Stacked Bar)
+        const options2 = {
+            chart: {
+                id: 'chart2',
+                type: 'bar',
+                height: 300,
+                stacked: true,
+                zoom: {
+                    enabled: true,
+                },
+                events: {
+                    zoomed: (chartContext, { xaxis }) => {
+                        chart1.updateOptions({
+                            xaxis: {
+                                min: xaxis.min,
+                                max: xaxis.max,
+                            },
+                        });
+                    },
+                    scrolled: (chartContext, { xaxis }) => {
+                        chart1.updateOptions({
+                            xaxis: {
+                                min: xaxis.min,
+                                max: xaxis.max,
+                            },
+                        });
+                    },
+                },
+            },
+            series: series2,
+            xaxis: {
+                type: 'datetime',
+                categories: categories,
+            },
+        };
+
+        const chart1 = new ApexCharts(document.querySelector("#chart1"), options1);
+        const chart2 = new ApexCharts(document.querySelector("#chart2"), options2);
+
+        chart1.render();
+        chart2.render();
+    </script>
+</body>
