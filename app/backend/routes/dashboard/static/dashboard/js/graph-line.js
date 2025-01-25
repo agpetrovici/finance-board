@@ -1,6 +1,6 @@
 export async function graphLine(data) {
   // Get the canvas element
-  const ctx = document.getElementById("financeChart").getContext("2d");
+  const ctx = document.querySelector("#finance-chart").getContext("2d");
 
   // Chart configuration
   const config = {
