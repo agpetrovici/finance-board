@@ -1,4 +1,4 @@
-export async function graph_line(data) {
+export async function graphLine(data) {
   // Get the canvas element
   const ctx = document.getElementById("financeChart").getContext("2d");
 

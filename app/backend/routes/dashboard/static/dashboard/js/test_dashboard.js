@@ -1,4 +1,4 @@
-import { graph_line } from "./graph_line.js";
+import { graph_line } from "./graph-line.js";
 
 document.addEventListener("DOMContentLoaded", function () {
   // Sample data
@@ -20,5 +20,5 @@ document.addEventListener("DOMContentLoaded", function () {
     labels: ["January", "February", "March", "April", "May", "June"],
   };
 
-  graph_line(data);
+  graphLine(data);
 });
