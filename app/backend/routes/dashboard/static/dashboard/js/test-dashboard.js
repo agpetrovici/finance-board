@@ -1,4 +1,4 @@
-import { graph_line } from "./graph-line.js";
+import { graphLine } from "./graph-line.js";
 
 document.addEventListener("DOMContentLoaded", function () {
   // Sample data
