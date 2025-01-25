@@ -1,0 +1,217 @@
+<head>
+</head>
+
+<body>
+    <!-- The chart divs will be generated dynamically -->
+    <div id="charts-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <script>
+        let categories = [
+            "2023-01-01",
+            "2023-01-02",
+            "2023-01-03",
+            "2023-01-04",
+            "2023-01-05",
+            "2023-01-06",
+            "2023-01-07",
+        ];
+
+        let series = [
+            [
+                {
+                    name: "PRODUCT A",
+                    data: [
+                        { x: "2023-01-01", y: 44, tooltip: "Custom tooltip for A - Jan 1" },
+                        { x: "2023-01-02", y: 55, tooltip: "Custom tooltip for A - Jan 2" },
+                        { x: "2023-01-03", y: 41, tooltip: "Custom tooltip for A - Jan 3" },
+                        { x: "2023-01-04", y: 67, tooltip: "Custom tooltip for A - Jan 4" },
+                        { x: "2023-01-05", y: 22, tooltip: "Custom tooltip for A - Jan 5" },
+                        { x: "2023-01-06", y: 43, tooltip: "Custom tooltip for A - Jan 6" },
+                        { x: "2023-01-07", y: 36, tooltip: "Custom tooltip for A - Jan 7" }
+                    ]
+                },
+                {
+                    name: "PRODUCT B",
+                    data: [
+                        { x: "2023-01-01", y: 13, tooltip: "Custom tooltip for B - Jan 1" },
+                        { x: "2023-01-02", y: 23, tooltip: "Custom tooltip for B - Jan 2" },
+                        { x: "2023-01-03", y: 20, tooltip: "Custom tooltip for B - Jan 3" },
+                        { x: "2023-01-04", y: 8, tooltip: "Custom tooltip for B - Jan 4" },
+                        { x: "2023-01-05", y: 13, tooltip: "Custom tooltip for B - Jan 5" },
+                        { x: "2023-01-06", y: 27, tooltip: "Custom tooltip for B - Jan 6" },
+                        { x: "2023-01-07", y: 20, tooltip: "Custom tooltip for B - Jan 7" }
+                    ]
+                },
+                {
+                    name: "PRODUCT C",
+                    data: [
+                        { x: "2023-01-01", y: 11, tooltip: "Custom tooltip for C - Jan 1" },
+                        { x: "2023-01-02", y: 17, tooltip: "Custom tooltip for C - Jan 2" },
+                        { x: "2023-01-03", y: 15, tooltip: "Custom tooltip for C - Jan 3" },
+                        { x: "2023-01-04", y: 15, tooltip: "Custom tooltip for C - Jan 4" },
+                        { x: "2023-01-05", y: 21, tooltip: "Custom tooltip for C - Jan 5" },
+                        { x: "2023-01-06", y: 14, tooltip: "Custom tooltip for C - Jan 6" },
+                        { x: "2023-01-07", y: 18, tooltip: "Custom tooltip for C - Jan 7" }
+                    ]
+                },
+                {
+                    name: "PRODUCT D",
+                    data: [
+                        { x: "2023-01-01", y: 21, tooltip: "Custom tooltip for D - Jan 1" },
+                        { x: "2023-01-02", y: 7, tooltip: "Custom tooltip for D - Jan 2" },
+                        { x: "2023-01-03", y: 25, tooltip: "Custom tooltip for D - Jan 3" },
+                        { x: "2023-01-04", y: 13, tooltip: "Custom tooltip for D - Jan 4" },
+                        { x: "2023-01-05", y: 22, tooltip: "Custom tooltip for D - Jan 5" },
+                        { x: "2023-01-06", y: 8, tooltip: "Custom tooltip for D - Jan 6" },
+                        { x: "2023-01-07", y: 19, tooltip: "Custom tooltip for D - Jan 7" }
+                    ]
+                },
+            ], [
+                {
+                    name: "PRODUCT 1",
+                    data: [
+                        { x: "2023-01-01", y: 44, tooltip: "Custom tooltip for 1 - Jan 1" },
+                        { x: "2023-01-02", y: 55, tooltip: "Custom tooltip for 1 - Jan 2" },
+                        { x: "2023-01-03", y: 41, tooltip: "Custom tooltip for 1 - Jan 3" },
+                        { x: "2023-01-04", y: 67, tooltip: "Custom tooltip for 1 - Jan 4" },
+                        { x: "2023-01-05", y: 22, tooltip: "Custom tooltip for 1 - Jan 5" },
+                        { x: "2023-01-06", y: 43, tooltip: "Custom tooltip for 1 - Jan 6" },
+                        { x: "2023-01-07", y: 36, tooltip: "Custom tooltip for 1 - Jan 7" }
+                    ]
+                },
+                {
+                    name: "PRODUCT 2",
+                    data: [
+                        { x: "2023-01-01", y: 13, tooltip: "Custom tooltip for 2 - Jan 1" },
+                        { x: "2023-01-02", y: 23, tooltip: "Custom tooltip for 2 - Jan 2" },
+                        { x: "2023-01-03", y: 20, tooltip: "Custom tooltip for 2 - Jan 3" },
+                        { x: "2023-01-04", y: 8, tooltip: "Custom tooltip for 2 - Jan 4" },
+                        { x: "2023-01-05", y: 13, tooltip: "Custom tooltip for 2 - Jan 5" },
+                        { x: "2023-01-06", y: 27, tooltip: "Custom tooltip for 2 - Jan 6" },
+                        { x: "2023-01-07", y: 20, tooltip: "Custom tooltip for 2 - Jan 7" }
+                    ]
+                },
+                {
+                    name: "PRODUCT 3",
+                    data: [
+                        { x: "2023-01-01", y: 11, tooltip: "Custom tooltip for 3 - Jan 1" },
+                        { x: "2023-01-02", y: 17, tooltip: "Custom tooltip for 3 - Jan 2" },
+                        { x: "2023-01-03", y: 15, tooltip: "Custom tooltip for 3 - Jan 3" },
+                        { x: "2023-01-04", y: 15, tooltip: "Custom tooltip for 3 - Jan 4" },
+                        { x: "2023-01-05", y: 21, tooltip: "Custom tooltip for 3 - Jan 5" },
+                        { x: "2023-01-06", y: 14, tooltip: "Custom tooltip for 3 - Jan 6" },
+                        { x: "2023-01-07", y: 18, tooltip: "Custom tooltip for 3 - Jan 7" }
+                    ]
+                },
+            ],
+            [
+                {
+                    name: "PRODUCT 1",
+                    data: [
+                        { x: "2023-01-01", y: 0, tooltip: "Custom tooltip for 1 - Jan 1" },
+                        { x: "2023-01-02", y: 55, tooltip: "Custom tooltip for 1 - Jan 2" },
+                        { x: "2023-01-03", y: 41, tooltip: "Custom tooltip for 1 - Jan 3" },
+                        { x: "2023-01-04", y: 67, tooltip: "Custom tooltip for 1 - Jan 4" },
+                        { x: "2023-01-05", y: 22, tooltip: "Custom tooltip for 1 - Jan 5" },
+                        { x: "2023-01-06", y: 43, tooltip: "Custom tooltip for 1 - Jan 6" },
+                        { x: "2023-01-07", y: 36, tooltip: "Custom tooltip for 1 - Jan 7" }
+                    ]
+                },
+                {
+                    name: "PRODUCT 2",
+                    data: [
+                        { x: "2023-01-01", y: 13, tooltip: "Custom tooltip for 2 - Jan 1" },
+                        { x: "2023-01-02", y: 0, tooltip: "Custom tooltip for 2 - Jan 2" },
+                        { x: "2023-01-03", y: 20, tooltip: "Custom tooltip for 2 - Jan 3" },
+                        { x: "2023-01-04", y: 8, tooltip: "Custom tooltip for 2 - Jan 4" },
+                        { x: "2023-01-05", y: 13, tooltip: "Custom tooltip for 2 - Jan 5" },
+                        { x: "2023-01-06", y: 27, tooltip: "Custom tooltip for 2 - Jan 6" },
+                        { x: "2023-01-07", y: 20, tooltip: "Custom tooltip for 2 - Jan 7" }
+                    ]
+                },
+                {
+                    name: "PRODUCT 3",
+                    data: [
+                        { x: "2023-01-01", y: 11, tooltip: "Custom tooltip for 3 - Jan 1" },
+                        { x: "2023-01-02", y: 17, tooltip: "Custom tooltip for 3 - Jan 2" },
+                        { x: "2023-01-03", y: 0, tooltip: "Custom tooltip for 3 - Jan 3" },
+                        { x: "2023-01-04", y: 15, tooltip: "Custom tooltip for 3 - Jan 4" },
+                        { x: "2023-01-05", y: 21, tooltip: "Custom tooltip for 3 - Jan 5" },
+                        { x: "2023-01-06", y: 14, tooltip: "Custom tooltip for 3 - Jan 6" },
+                        { x: "2023-01-07", y: 18, tooltip: "<ul><li>Custom tooltip for 3 - Jan 7</li><li>Other tooltip</li></ul>" }
+                    ]
+                }
+            ]
+        ]
+
+        // Create container for all charts
+        const chartsContainer = document.getElementById('charts-container');
+        const charts = [];
+
+        // Generate charts dynamically
+        series.forEach((seriesData, index) => {
+            // Create div for this chart
+            const chartDiv = document.createElement('div');
+            chartDiv.id = `stacked-column${index + 1}`;
+            chartsContainer.appendChild(chartDiv);
+
+            // Generate options for this chart
+            const options = {
+                chart: {
+                    id: `chart${index + 1}`,
+                    type: 'bar',
+                    height: 300,
+                    stacked: true,
+                    zoom: {
+                        enabled: true,
+                    },
+                    events: {
+                        zoomed: (chartContext, { xaxis }) => {
+                            // Update all other charts except this one
+                            charts.forEach((chart, i) => {
+                                if (i !== index) {
+                                    chart.updateOptions({
+                                        xaxis: {
+                                            min: xaxis.min,
+                                            max: xaxis.max,
+                                        },
+                                    });
+                                }
+                            });
+                        },
+                        scrolled: (chartContext, { xaxis }) => {
+                            // Update all other charts except this one
+                            charts.forEach((chart, i) => {
+                                if (i !== index) {
+                                    chart.updateOptions({
+                                        xaxis: {
+                                            min: xaxis.min,
+                                            max: xaxis.max,
+                                        },
+                                    });
+                                }
+                            });
+                        },
+                    },
+                },
+                series: seriesData,
+                tooltip: {
+                    custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+                        return w.config.series[seriesIndex].data[dataPointIndex].tooltip;
+                    }
+                },
+                xaxis: {
+                    type: 'datetime',
+                    categories: categories,
+                },
+            };
+
+            // Create and render the chart
+            const chart = new ApexCharts(chartDiv, options);
+            charts.push(chart);
+            chart.render();
+        });
+    </script>
+</body>

@@ -65,6 +65,11 @@ export function graphBarStacked(
         "#D10CE8",
       ],
       series: seriesData,
+      tooltip: {
+        custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+          return w.config.series[seriesIndex].data[dataPointIndex].tooltip;
+        },
+      },
       xaxis: {
         type: "datetime",
         categories: categories,
