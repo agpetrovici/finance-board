@@ -7,7 +7,11 @@ Currently a work in progress.
 It supports several banks and accounts.
 It uses a local PostgreSQL database to store the data and a Flask backend to serve the data.
 
-![Finance Board](./docs/finance_board.png)
+![Finance Board](./docs/finance-board-line.png)
+
+Displays the transactions per month with details over tooltips.
+
+![Finance Board](./docs/finance-board-column-chart.png)
 
 Installation:
 1. Clone the repository.
