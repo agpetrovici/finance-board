@@ -1,14 +1,14 @@
 import os
 from datetime import datetime
+from dateutil.rrule import rrule, MONTHLY
 from decimal import Decimal
 from typing import Dict, List
 
 from flask import Blueprint, Response, jsonify
-from dateutil.rrule import rrule, MONTHLY
 
-from app.backend.models.m_account import Account
 from app.backend.models.db import db
 from app.backend.models.e_transaction import Transaction
+from app.backend.models.m_account import Account
 from app.backend.utils.bank_statement import get_deposits
 from app.backend.utils.bank_statement import get_monthly_transactions
 
