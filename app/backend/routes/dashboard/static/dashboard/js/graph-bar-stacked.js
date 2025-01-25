@@ -1,4 +1,9 @@
-export function graphBarStacked(series, categories, containerId) {
+export function graphBarStacked(
+  series,
+  categories,
+  containerId,
+  customColors = null
+) {
   // Create container for all charts
   const chartsContainer = document.querySelector(containerId);
   const charts = [];
@@ -49,6 +54,16 @@ export function graphBarStacked(series, categories, containerId) {
           },
         },
       },
+      colors: customColors || [
+        "#008FFB",
+        "#00E396",
+        "#FEB019",
+        "#FF4560",
+        "#775DD0",
+        "#546E7A",
+        "#26a69a",
+        "#D10CE8",
+      ],
       series: seriesData,
       xaxis: {
         type: "datetime",
