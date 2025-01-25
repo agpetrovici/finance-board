@@ -67,7 +67,11 @@ export function graphBarStacked(
       series: seriesData,
       tooltip: {
         custom: function ({ series, seriesIndex, dataPointIndex, w }) {
-          return w.config.series[seriesIndex].data[dataPointIndex].tooltip;
+          const tooltips =
+            w.config.series[seriesIndex].data[dataPointIndex].tooltip;
+          return `<ul style="list-style-type: none; padding-left: 0; margin: 0;">
+            ${tooltips.map((tip) => `<li>${tip}</li>`).join("")}
+          </ul>`;
         },
       },
       xaxis: {
