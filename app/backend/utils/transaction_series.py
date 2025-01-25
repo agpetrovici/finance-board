@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import Dict, List, Set, Tuple
 
 from app.backend.models.e_transaction import Transaction
+from app.backend.utils.bank_statement import get_deposits
 
 
 @dataclass
@@ -33,6 +34,11 @@ def get_transaction_series() -> Tuple[List[Category], List[str]]:
     transactions = Transaction.query.filter(Transaction.date >= datetime.now().replace(year=datetime.now().year - 1)).all()
     if not transactions:
         return series, dates
+
+    deposits = get_deposits()
+    for deposit in deposits:
+        # TODOL Add category and subcategory in Deposit table
+        transactions.append(Transaction(date=deposit.date_start, name=deposit.name, category="Deposit", subcategory="Deposit", amount=deposit.amount))
 
     # Group transactions by date and category/subcategory
     categories_set: Set[str] = set()
