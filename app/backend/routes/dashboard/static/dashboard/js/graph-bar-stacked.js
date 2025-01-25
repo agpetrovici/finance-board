@@ -9,10 +9,15 @@ export function graphBarStacked(
   const charts = [];
 
   // Generate charts dynamically
-  series.forEach((seriesData, index) => {
+  series.forEach((seriesGroup, index) => {
     // Create div for this chart
     const chartDiv = document.createElement("div");
     chartDiv.id = `stacked-column${index + 1}`;
+
+    // Add category title
+    const categoryTitle = document.createElement("h2");
+    categoryTitle.textContent = seriesGroup.category;
+    chartsContainer.appendChild(categoryTitle);
     chartsContainer.appendChild(chartDiv);
 
     // Generate options for this chart
@@ -64,14 +69,14 @@ export function graphBarStacked(
         "#26a69a",
         "#D10CE8",
       ],
-      series: seriesData,
+      series: seriesGroup.data,
       tooltip: {
         custom: function ({ series, seriesIndex, dataPointIndex, w }) {
           const tooltips =
             w.config.series[seriesIndex].data[dataPointIndex].tooltip;
           return `<ul style="list-style-type: none; padding-left: 0; margin: 0;">
-            ${tooltips.map((tip) => `<li>${tip}</li>`).join("")}
-          </ul>`;
+                ${tooltips.map((tip) => `<li>${tip}</li>`).join("")}
+              </ul>`;
         },
       },
       xaxis: {
