@@ -6,7 +6,7 @@ from flask import request
 
 from app.backend.models.db import db
 from app.backend.models.m_account import Account
-from app.backend.routes.imports.utils.bbva.process_bbva import get_new_movements
+from app.backend.routes.imports.utils.bbva.process_bbva import get_new_movements_bbva
 from app.backend.routes.imports.utils.binance.get_account_balance import get_account_balance
 from app.backend.routes.imports.utils.csb43.get_csb43_movements import get_new_movements_from_BankStatement
 from app.backend.routes.imports.utils.csb43.process_csb43 import parse_aes43
@@ -60,7 +60,7 @@ def import_bbva_process() -> tuple[Response, int]:
         return jsonify({"status": "error", "message": "No last bank id."}), 400
 
     # Then get the new movements from the dict
-    new_movements = get_new_movements(data, last_movement, account_pk)
+    new_movements = get_new_movements_bbva(data, last_movement, account_pk)
     if not new_movements:
         return jsonify({"status": "error", "message": "No new movements."}), 400
 
@@ -98,7 +98,7 @@ def test_import_bbva_process() -> tuple[Response, int]:
         return jsonify({"status": "error", "message": "No last bank id."}), 400
 
     # Then get the new movements from the dict
-    new_movements = get_new_movements(data, last_bank_id, account_pk)
+    new_movements = get_new_movements_bbva(data, last_bank_id, account_pk)
     if not new_movements:
         return jsonify({"status": "error", "message": "No new movements."}), 400
 

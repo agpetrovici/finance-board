@@ -5,7 +5,7 @@ from app.backend.models.e_transaction import Transaction
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement
 
 
-def get_new_movements(data: dict[str, Any], last_movement: Optional[Transaction], account_pk: int) -> list[Transaction]:
+def get_new_movements_bbva(data: dict[str, Any], last_movement: Optional[Transaction], account_pk: int) -> list[Transaction]:
     movements = []
     get_movements = False
     if last_movement is None:
@@ -37,6 +37,6 @@ def process_bbva(account_pk: int, data: dict[str, Any]) -> None:
     last_bank_id = get_last_movement(account_pk)
     if last_bank_id is None:
         return None
-    new_movements = get_new_movements(data, last_bank_id, account_pk)
+    new_movements = get_new_movements_bbva(data, last_bank_id, account_pk)
     print(new_movements)
     return None
