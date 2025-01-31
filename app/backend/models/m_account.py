@@ -14,7 +14,8 @@ class Account(db.Model):  # type: ignore[name-defined, misc]
     branch_code = db.Column(db.String(8))
     control_digits = db.Column(db.String(10))
     account_number = db.Column(db.String(100))
-
+    bank_id = db.Column(db.String(50))  # unique and internal identifier that the bank provides for the account
+    # Timestamps
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
 
