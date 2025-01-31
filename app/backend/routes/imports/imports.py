@@ -149,8 +149,7 @@ def import_from_binance() -> tuple[Response, int]:
 
 @bp.route("/revolut")
 def import_revolut() -> str:
-    accounts = Account.query.all()
-    return render_template("imports/tpl_revolut.html", accounts=accounts)
+    return render_template("imports/tpl_revolut.html")
 
 
 @bp.route("/from-revolut", methods=["POST"])
@@ -159,16 +158,10 @@ def import_from_revolut() -> tuple[Response, int]:
     if data is None:
         return jsonify({"status": "error", "message": "No data received."}), 400
 
-    account_pk = data.get("accountPk")
     text = data.get("text")
 
-    if account_pk == "" or text == "":
+    if text == "":
         return jsonify({"status": "error", "message": "No account pk or text provided."}), 400
-
-    try:
-        account_pk = int(account_pk)
-    except ValueError:
-        return jsonify({"status": "error", "message": "Invalid account pk."}), 400
 
     try:
         data = json.loads(text)
