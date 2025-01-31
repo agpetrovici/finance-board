@@ -11,6 +11,7 @@ from app.backend.routes.imports.utils.binance.get_account_balance import get_acc
 from app.backend.routes.imports.utils.csb43.get_csb43_movements import get_new_movements_from_BankStatement
 from app.backend.routes.imports.utils.csb43.process_csb43 import parse_aes43
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement
+from app.backend.routes.imports.utils.revolut.process_revolut import get_new_movements_revolut
 
 bp = Blueprint(
     "imports",
@@ -144,3 +145,44 @@ def import_from_binance() -> tuple[Response, int]:
         return jsonify({"status": "success", "message": "Account balance imported successfully."}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": f"Account balance import failed: {e}."}), 400
+
+
+@bp.route("/revolut")
+def import_revolut() -> str:
+    accounts = Account.query.all()
+    return render_template("imports/tpl_revolut.html", accounts=accounts)
+
+
+@bp.route("/from-revolut", methods=["POST"])
+def import_from_revolut() -> tuple[Response, int]:
+    data = request.json
+    if data is None:
+        return jsonify({"status": "error", "message": "No data received."}), 400
+
+    account_pk = data.get("accountPk")
+    text = data.get("text")
+
+    if account_pk == "" or text == "":
+        return jsonify({"status": "error", "message": "No account pk or text provided."}), 400
+
+    try:
+        account_pk = int(account_pk)
+    except ValueError:
+        return jsonify({"status": "error", "message": "Invalid account pk."}), 400
+
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        return jsonify({"status": "error", "message": "Invalid JSON format."}), 400
+
+    accounts = Account.query.all()
+
+    # Then get the new movements from the dict
+    new_movements = get_new_movements_revolut(data, accounts)
+    if not new_movements:
+        return jsonify({"status": "error", "message": "No new movements."}), 400
+
+    # Then save the new movements to the database
+    db.session.add_all(new_movements)
+    db.session.commit()
+    return jsonify({"status": "success", "message": f"Added {len(new_movements)} movements."}), 200
