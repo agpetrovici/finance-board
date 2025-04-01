@@ -59,7 +59,14 @@ def get_bank_statement() -> Response:
         labels.append(date.strftime("%Y-%m"))
         current_amount_subtotal = Decimal("0")
         for account_fk in accounts_pks.keys():
-            current_amount = row.get(account_fk, Decimal("0"))
+            # Get current amount, or use previous month's value if None
+            current_amount = row.get(account_fk)
+            if current_amount is None:
+                # Use the previous value from amount_by_account if available
+                if amount_by_account[account_fk]:
+                    current_amount = amount_by_account[account_fk][-1]
+                else:
+                    current_amount = Decimal("0")
             current_amount_subtotal += current_amount
             amount_by_account[account_fk].append(current_amount)
         amount_total.append(current_amount_subtotal)
