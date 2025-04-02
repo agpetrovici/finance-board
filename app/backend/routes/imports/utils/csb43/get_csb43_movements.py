@@ -10,7 +10,7 @@ from app.backend.routes.imports.utils.get_last_movement import get_last_movement
 
 def get_new_movements(data: List[TransactionCsb43], last_transaction: Optional[Transaction], account_pk: int) -> list[Transaction]:
     movements = []
-    balance: Decimal = Decimal("0")
+    balance = last_transaction.balance
 
     # If we managed to get here, is because we have a valid account in the database,
     # so if that is the case and we dont have a last_transaction, then
@@ -35,7 +35,6 @@ def get_new_movements(data: List[TransactionCsb43], last_transaction: Optional[T
             )
         elif isinstance(last_transaction, Transaction) and (transaction.reference1 == last_transaction.bank_id):
             get_movements = True
-            balance = last_transaction.balance
             continue
 
     return movements
