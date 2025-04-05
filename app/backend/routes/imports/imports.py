@@ -189,7 +189,7 @@ def import_from_revolut() -> tuple[Response, int]:
 
 @bp.route("/receipts")
 def import_receipts() -> str:
-    return render_template("imports/tpl_receipts.html")
+    return render_template("imports/receipts/tpl_receipts.html")
 
 
 @bp.route("/get-receipt-data", methods=["POST"])
