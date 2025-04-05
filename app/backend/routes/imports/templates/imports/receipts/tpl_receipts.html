@@ -24,6 +24,8 @@
                                 </div>
                             </div>
                             <div class="col-md-6" id="receipt-data-container">
+                                <label for="receipt-id" class="form-label">ID</label>
+                                <input type="text" class="form-control" id="receipt-id" disabled>
                                 {{ receipt_value("time", "Transaction Time", data, True) }}
                                 {{ receipt_list("line_items", "Line Items", data, True) }}
                                 {{ receipt_value("date", "Date", data, False) }}

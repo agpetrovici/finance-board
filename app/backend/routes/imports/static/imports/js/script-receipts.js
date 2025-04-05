@@ -307,6 +307,8 @@ async function displayReceiptData(data) {
 async function handleReceiptProcessing() {
   await displayReceiptImage();
   const data = await getReceiptData();
+
+  document.querySelector("#receipt-id").value = data.data.transaction_pk;
   await displayReceiptData(data);
 }
 

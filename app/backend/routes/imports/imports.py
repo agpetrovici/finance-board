@@ -204,9 +204,9 @@ def import_from_receipts() -> tuple[Response, int]:
     # Return the image file encoded in base64 within a JSON response
     data = {}
     if file_name and data_input:
+        data["transaction_pk"] = transaction.transaction_pk
         data["transaction"] = {
-            "date": str(_date),
-            "amount": str(_amount),
+            # Data to be updated by the user
             "time": {
                 "value": result.document.inference.prediction.time.value,
                 "bbox": result.document.inference.prediction.time.bounding_box,
