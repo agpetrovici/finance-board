@@ -1,4 +1,5 @@
 import { appendAlert } from "../../../../../../static/js/alerts.js";
+import { displayReceiptImage, getReceiptData } from "./script-receipts.js";
 
 let stream = null;
 const receiptDataContainer = document.querySelector("#receipt-data-container");

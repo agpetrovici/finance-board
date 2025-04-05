@@ -6,7 +6,8 @@ const fileInput = document.querySelector("#receipt-image");
 const receiptCanvas = document.querySelector("#receipt-canvas");
 const processButton = document.querySelector("#btn-process-receipt");
 const cameraButton = document.querySelector("#btn-use-camera");
-async function getReceiptData() {
+
+export async function getReceiptData() {
   if (!fileInput.files || fileInput.files.length === 0) {
     appendAlert("Please select a receipt image first.", "danger");
     return;
@@ -32,7 +33,7 @@ async function getReceiptData() {
   }
 }
 
-async function displayReceiptImage() {
+export async function displayReceiptImage() {
   if (!fileInput.files || fileInput.files.length === 0) {
     appendAlert("Please select a receipt image first.", "danger");
     return;
