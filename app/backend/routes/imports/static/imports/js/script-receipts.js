@@ -148,21 +148,37 @@ function setRectangleFill(rectangle) {
 function removeRectangleFill(rectangle) {
   const ctx = receiptCanvas.getContext("2d");
 
-  // Redraw the receipt image
+  // Only clear the specific rectangle area
+  ctx.clearRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+
+  // Redraw just that portion of the receipt image
   const img = new Image();
   img.src = URL.createObjectURL(fileInput.files[0]);
 
   img.onload = function () {
+    // Calculate the source coordinates in the original image
+    const sourceX =
+      (rectangle.x - receiptCanvas.currentCenterX) / receiptCanvas.currentScale;
+    const sourceY =
+      (rectangle.y - receiptCanvas.currentCenterY) / receiptCanvas.currentScale;
+    const sourceWidth = rectangle.width / receiptCanvas.currentScale;
+    const sourceHeight = rectangle.height / receiptCanvas.currentScale;
+
+    // Draw just the portion of the image that corresponds to this rectangle
     ctx.drawImage(
       img,
-      receiptCanvas.currentCenterX,
-      receiptCanvas.currentCenterY,
-      img.width * receiptCanvas.currentScale,
-      img.height * receiptCanvas.currentScale
+      sourceX,
+      sourceY,
+      sourceWidth,
+      sourceHeight,
+      rectangle.x,
+      rectangle.y,
+      rectangle.width,
+      rectangle.height
     );
 
     // Add semi-transparent grey fill
-    ctx.fillStyle = "rgba(128, 128, 128, 0.1)"; // Light grey with 10% opacity
+    ctx.fillStyle = "rgba(128, 128, 128, 0)";
     ctx.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
 
     // Redraw the outline of the rectangle
