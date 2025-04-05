@@ -3,6 +3,8 @@ import json
 from flask import Blueprint, Response
 from flask import render_template, jsonify
 from flask import request
+from flask import current_app
+from mindee import Client
 
 from app.backend.models.db import db
 from app.backend.models.m_account import Account
@@ -12,6 +14,7 @@ from app.backend.routes.imports.utils.csb43.get_csb43_movements import get_new_m
 from app.backend.routes.imports.utils.csb43.process_csb43 import parse_aes43
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement
 from app.backend.routes.imports.utils.revolut.process_revolut import get_new_movements_revolut
+from app.backend.utils.receipts.prediction import make_receipt_prediction
 
 bp = Blueprint(
     "imports",
@@ -179,3 +182,21 @@ def import_from_revolut() -> tuple[Response, int]:
     db.session.add_all(new_movements)
     db.session.commit()
     return jsonify({"status": "success", "message": f"Added {len(new_movements)} movements."}), 200
+
+
+@bp.route("/receipts")
+def import_receipts() -> str:
+    return render_template("imports/tpl_receipts.html")
+
+
+@bp.route("/from-receipts", methods=["POST"])
+def import_from_receipts() -> tuple[Response, int]:
+    file = request.files["receipt"]
+    data_input: bytes = file.read()
+    file_name = file.filename
+
+    mindee_client = Client(api_key=current_app.config["MINDEE_API_KEY"])
+    result = make_receipt_prediction(mindee_client, data_input, file_name)
+
+    print(result.document)
+    return jsonify({"status": "success", "message": "Receipts imported successfully."}), 200
