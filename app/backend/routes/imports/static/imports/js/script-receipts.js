@@ -1,4 +1,5 @@
 import { appendAlert } from "../../../../../../static/js/alerts.js";
+import { sendJSONgetJSON } from "../../../../../../static/js/fetch.js";
 
 const fileInput = document.querySelector("#receipt-image");
 const receiptCanvas = document.querySelector("#receipt-canvas");
@@ -312,7 +313,45 @@ async function handleReceiptProcessing() {
   await displayReceiptData(data);
 }
 
+async function handleReceiptSaving() {
+  const data = {};
+
+  // Get data
+  data.transaction_pk = document.querySelector("#receipt-id").value;
+
+  const receiptDataContainers = document.querySelectorAll(
+    "#receipt-data-container .data-container.individual, #receipt-data-container .data-container.list"
+  );
+
+  receiptDataContainers.forEach((item) => {
+    if (item.classList.contains("individual")) {
+      if (item.querySelector("input").disabled) {
+        return;
+      }
+      let variableName = item.getAttribute("data-variable-name");
+      let value = item.querySelector("input").value;
+      data[variableName] = value;
+    } else {
+      let variableName = item.getAttribute("data-variable-name");
+      let itemLists = item.querySelector(".container");
+      const inputs = itemLists.querySelectorAll("input");
+      const values = Array.from(inputs).map((input) => input.value);
+      data[variableName] = values;
+    }
+  });
+
+  // Send data to server
+  try {
+    let response = await sendJSONgetJSON("/imports/update-receipt", data);
+    appendAlert(response.message, "success");
+  } catch (error) {
+    appendAlert(error.message, "danger");
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const processButton = document.querySelector("#btn-process-receipt");
   processButton.addEventListener("click", handleReceiptProcessing);
+  const saveButton = document.querySelector("#btn-save-receipt");
+  saveButton.addEventListener("click", handleReceiptSaving);
 });

@@ -1,6 +1,5 @@
 import json
-import base64
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 from flask import Blueprint, Response
@@ -18,6 +17,8 @@ from app.backend.routes.imports.utils.csb43.process_csb43 import parse_aes43
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement
 from app.backend.routes.imports.utils.revolut.process_revolut import get_new_movements_revolut
 from app.backend.utils.receipts.prediction import make_receipt_prediction
+from app.backend.utils.receipts.transaction import get_transaction
+from app.backend.models.e_transaction import Transaction
 
 bp = Blueprint(
     "imports",
@@ -230,3 +231,37 @@ def import_from_receipts() -> tuple[Response, int]:
             "data": data,
         }
     ), 200
+
+
+@bp.route("/update-receipt", methods=["POST"])
+def update_receipt() -> tuple[Response, int]:
+    data = request.json
+    if data is None:
+        return jsonify({"status": "error", "message": "No data received."}), 400
+
+    transaction_pk = data.get("transaction_pk")
+    if not transaction_pk:
+        return jsonify({"status": "error", "message": "No transaction pk provided."}), 400
+
+    # Find receipt in db
+    receipt: Transaction = Transaction.query.filter_by(transaction_pk=transaction_pk).first()
+    if receipt is None:
+        return jsonify({"status": "error", "message": "Receipt not found."}), 400
+
+    # Clean the data to be updated
+    _time: str = data.get("time")
+    _date: datetime = receipt.date
+    if _time:
+        try:
+            time_parts = _time.split(":")
+            _date = _date.replace(hour=int(time_parts[0]), minute=int(time_parts[1]))
+        except (ValueError, IndexError):
+            pass
+
+    receipt.date = _date
+    receipt.description = "\n".join([x for x in data.get("line_items") if x != ""])
+
+    # Update the receipt
+    receipt.update(data)
+
+    return jsonify({"status": "success", "message": "Receipt updated successfully."}), 200
