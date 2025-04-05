@@ -1,0 +1,2 @@
+# Javascript
+Always split addEventListener from the function that is calling.
