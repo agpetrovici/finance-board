@@ -204,9 +204,6 @@ def import_from_receipts() -> tuple[Response, int]:
     # Return the image file encoded in base64 within a JSON response
     data = {}
     if file_name and data_input:
-        encoded_image = base64.b64encode(data_input).decode("utf-8")
-        data["image"] = encoded_image
-        data["filename"] = file_name
         data["transaction"] = {
             "date": str(_date),
             "amount": str(_amount),

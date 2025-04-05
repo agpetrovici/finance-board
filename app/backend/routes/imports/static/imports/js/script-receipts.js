@@ -1,8 +1,8 @@
 import { appendAlert } from "../../../../../../static/js/alerts.js";
 
-async function getReceiptData() {
-  const fileInput = document.querySelector("#receipt-image");
+const fileInput = document.querySelector("#receipt-image");
 
+async function getReceiptData() {
   if (!fileInput.files || fileInput.files.length === 0) {
     appendAlert("Please select a receipt image first.", "danger");
     return;
@@ -28,43 +28,47 @@ async function getReceiptData() {
   }
 }
 
-function displayReceiptImage(data) {
+async function displayReceiptImage() {
   const receiptCanvas = document.querySelector("#receipt-canvas");
 
-  if (data && data.data && data.data.image) {
-    const ctx = receiptCanvas.getContext("2d");
-    const img = new Image();
-    img.onload = function () {
-      // Clear the canvas
-      ctx.clearRect(0, 0, receiptCanvas.width, receiptCanvas.height);
-
-      // Calculate dimensions to maintain aspect ratio
-      const scale = Math.min(
-        receiptCanvas.width / img.width,
-        receiptCanvas.height / img.height
-      );
-
-      const centerX = (receiptCanvas.width - img.width * scale) / 2;
-      const centerY = (receiptCanvas.height - img.height * scale) / 2;
-
-      // Draw the image on the canvas
-      ctx.drawImage(
-        img,
-        centerX,
-        centerY,
-        img.width * scale,
-        img.height * scale
-      );
-    };
-    img.src = "data:image/jpeg;base64," + data.data.image;
-  } else {
-    console.error("No image data available");
+  if (!fileInput.files || fileInput.files.length === 0) {
+    appendAlert("Please select a receipt image first.", "danger");
+    return;
   }
+
+  const file = fileInput.files[0];
+  const fileURL = URL.createObjectURL(file);
+
+  const ctx = receiptCanvas.getContext("2d");
+  const img = new Image();
+
+  img.onload = function () {
+    // Clear the canvas
+    ctx.clearRect(0, 0, receiptCanvas.width, receiptCanvas.height);
+
+    // Calculate dimensions to maintain aspect ratio
+    const scale = Math.min(
+      receiptCanvas.width / img.width,
+      receiptCanvas.height / img.height
+    );
+
+    const centerX = (receiptCanvas.width - img.width * scale) / 2;
+    const centerY = (receiptCanvas.height - img.height * scale) / 2;
+
+    // Draw the image on the canvas
+    ctx.drawImage(img, centerX, centerY, img.width * scale, img.height * scale);
+
+    // Revoke the object URL to free memory
+    URL.revokeObjectURL(fileURL);
+  };
+
+  img.src = fileURL;
 }
 
 async function handleReceiptProcessing() {
+  await displayReceiptImage();
   const data = await getReceiptData();
-  displayReceiptImage(data);
+  console.log(data);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
