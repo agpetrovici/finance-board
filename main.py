@@ -17,4 +17,4 @@ if __name__ == "__main__":
     port_raw = os.getenv("FLASK_PORT")
     if isinstance(port_raw, str):
         port = int(port_raw)
-        app.run(port=port, host=os.getenv("FLASK_HOST"))
+        app.run(port=port, host=os.getenv("FLASK_HOST"), ssl_context=("cert.pem", "key.pem"))
