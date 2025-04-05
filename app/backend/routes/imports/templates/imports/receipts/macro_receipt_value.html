@@ -1,5 +1,5 @@
 {% macro receipt_value(variable_name, title, data, is_editable) %}
-<div class="mb-3 data-container" data-variable-name="{{ variable_name }}">
+<div class="mb-3 data-container individual" data-variable-name="{{ variable_name }}">
     <label for="receipt-{{ variable_name }}" class="form-label">{{ title }}</label>
     <div class="input-group">
         {% if is_editable %}

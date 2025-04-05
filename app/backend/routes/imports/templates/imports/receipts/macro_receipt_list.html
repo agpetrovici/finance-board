@@ -1,0 +1,6 @@
+{% macro receipt_list(variable_name, title, data, is_editable) %}
+<div class="mb-3 data-container list" data-variable-name="{{ variable_name }}">
+    <p>{{ title }}</p>
+    <div id="receipt-data-list-{{ variable_name }}" class="container"></div>
+</div>
+{% endmacro %}

@@ -25,8 +25,7 @@
                             </div>
                             <div class="col-md-6" id="receipt-data-container">
                                 {{ receipt_value("time", "Transaction Time", data, True) }}
-                                <p>Line Items</p>
-                                <div id="receipt-line-items" class="mb-3"></div>
+                                {{ receipt_list("line_items", "Line Items", data, True) }}
                                 {{ receipt_value("date", "Date", data, False) }}
                                 {{ receipt_value("total_amount", "Total Amount", data, False) }}
                             </div>

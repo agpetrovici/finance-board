@@ -266,8 +266,10 @@ function cropImage(originalImage, coords) {
   return tempCanvas.toDataURL();
 }
 
-async function processLineItems(data) {
-  const lineItemsContainer = document.querySelector("#receipt-line-items");
+async function processList(data, variable_name) {
+  const lineItemsContainer = document.querySelector(
+    `#receipt-data-list-${variable_name}`
+  );
   lineItemsContainer.innerHTML = "";
 
   data.data.transaction.line_items.forEach((item, index) => {
@@ -294,10 +296,12 @@ async function displayReceiptData(data) {
 
   receiptDataContainers.forEach((container) => {
     const variableName = container.getAttribute("data-variable-name");
-    displayValue(data.data.transaction[variableName], variableName);
+    if (container.classList.contains("individual")) {
+      displayValue(data.data.transaction[variableName], variableName);
+    } else {
+      processList(data, variableName);
+    }
   });
-
-  await processLineItems(data);
 }
 
 async function handleReceiptProcessing() {
