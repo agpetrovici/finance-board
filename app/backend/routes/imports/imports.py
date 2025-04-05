@@ -1,4 +1,7 @@
 import json
+import base64
+from datetime import date
+from decimal import Decimal
 
 from flask import Blueprint, Response
 from flask import render_template, jsonify
@@ -189,7 +192,7 @@ def import_receipts() -> str:
     return render_template("imports/tpl_receipts.html")
 
 
-@bp.route("/from-receipts", methods=["POST"])
+@bp.route("/get-receipt-data", methods=["POST"])
 def import_from_receipts() -> tuple[Response, int]:
     file = request.files["receipt"]
     data_input: bytes = file.read()
@@ -198,5 +201,21 @@ def import_from_receipts() -> tuple[Response, int]:
     mindee_client = Client(api_key=current_app.config["MINDEE_API_KEY"])
     result = make_receipt_prediction(mindee_client, data_input, file_name)
 
-    print(result.document)
-    return jsonify({"status": "success", "message": "Receipts imported successfully."}), 200
+    # Return the image file encoded in base64 within a JSON response
+    data = {}
+    if file_name and data_input:
+        encoded_image = base64.b64encode(data_input).decode("utf-8")
+        data["image"] = encoded_image
+        data["filename"] = file_name
+        data["transaction"] = {
+            "date": str(_date),
+            "amount": str(_amount),
+        }
+
+    return jsonify(
+        {
+            "status": "success",
+            "message": "Image processed successfully",
+            "data": data,
+        }
+    ), 200

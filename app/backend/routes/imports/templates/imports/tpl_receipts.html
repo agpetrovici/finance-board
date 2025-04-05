@@ -11,15 +11,29 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Import from receipts</h5>
-                    <div class="mb-3">
-                        <div class="text-center mb-3">
-                            <svg class="bd-placeholder-img img-fluid" width="300" height="200"
-                                xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Receipt example"
-                                preserveAspectRatio="xMidYMid slice" focusable="false">
-                                <title>Receipt example</title>
-                                <rect width="100%" height="100%" fill="#868e96"></rect>
-                                <text x="50%" y="50%" fill="#dee2e6" dy=".3em">Receipt Image</text>
-                            </svg>
+                    <div id="receipt-container">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="text-center mb-3">
+                                    <canvas id="receipt-canvas" class="img-fluid" width="500" height="700"
+                                        style="background-color: #868e96;" aria-label="Receipt example">
+                                        Your browser does not support the canvas element.
+                                    </canvas>
+                                </div>
+                            </div>
+                            <div class="col-md-6" id="receipt-data-container">
+                                <p class="card-text">
+                                    <span class="placeholder col-7"></span>
+                                    <span class="placeholder col-4"></span>
+                                    <span class="placeholder col-4"></span>
+                                    <span class="placeholder col-6"></span>
+                                    <span class="placeholder col-8"></span>
+                                    <span class="placeholder col-8"></span>
+                                    <span class="placeholder col-2"></span>
+                                    <span class="placeholder col-2"></span>
+                                    <span class="placeholder col-4"></span>
+                                </p>
+                            </div>
                         </div>
                     </div>
                     <div class="mb-3">
