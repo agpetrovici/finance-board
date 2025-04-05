@@ -5,6 +5,7 @@ const fileInput = document.querySelector("#receipt-image");
 const receiptCanvas = document.querySelector("#receipt-canvas");
 const processButton = document.querySelector("#btn-process-receipt");
 const cameraButton = document.querySelector("#btn-use-camera");
+const receiptDataContainer = document.querySelector("#receipt-data-container");
 let stream = null;
 
 // More robust check for camera support
@@ -372,6 +373,9 @@ async function handleCameraUsage() {
     return;
   }
 
+  // Hide container to have more screen area
+  receiptDataContainer.classList.add("d-none");
+
   try {
     // Try different methods to access the camera
     let mediaStream;
@@ -459,6 +463,8 @@ async function captureImage() {
   if (!stream) return;
 
   // Create a temporary canvas to capture the image
+  receiptDataContainer.classList.remove("d-none");
+
   const video = document.querySelector("video");
   const tempCanvas = document.createElement("canvas");
   tempCanvas.width = video.videoWidth;
