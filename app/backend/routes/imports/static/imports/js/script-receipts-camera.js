@@ -41,9 +41,57 @@ if (!isMediaDevicesSupported) {
   cameraButton.style.display = "none";
 }
 
+// Function to detect if the device is a mobile device
+function isMobileDevice() {
+  const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+  // Regular expressions to detect mobile devices
+  const mobileRegex =
+    /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
+
+  return mobileRegex.test(userAgent.toLowerCase());
+}
+
 // Function to handle camera usage
 export async function handleCameraUsage() {
-  // Check if MediaDevices API is supported
+  // Check if device is mobile
+  if (isMobileDevice()) {
+    // Create a hidden file input with capture attribute for mobile devices
+    const mobileFileInput = document.createElement("input");
+    mobileFileInput.type = "file";
+    mobileFileInput.accept = "image/*";
+    mobileFileInput.capture = "environment"; // This will open the native camera app
+    mobileFileInput.style.display = "none";
+    document.body.appendChild(mobileFileInput);
+
+    // Handle the file selection
+    mobileFileInput.addEventListener("change", async (event) => {
+      if (event.target.files && event.target.files[0]) {
+        // Copy the file to the main file input
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(event.target.files[0]);
+        fileInput.files = dataTransfer.files;
+
+        // Process the image
+        await displayReceiptImage();
+        const data = await getReceiptData();
+
+        if (data) {
+          document.querySelector("#receipt-id").value =
+            data.data.transaction_pk;
+          await displayReceiptData(data);
+        }
+      }
+      // Clean up
+      document.body.removeChild(mobileFileInput);
+    });
+
+    // Trigger the file input click
+    mobileFileInput.click();
+    return;
+  }
+
+  // For desktop devices, continue with the existing web camera implementation
   if (!isMediaDevicesSupported) {
     appendAlert(
       "Your browser or device doesn't support camera access. Please use the file upload option instead.",
@@ -60,9 +108,9 @@ export async function handleCameraUsage() {
     let mediaStream;
 
     try {
-      // Modern browsers
+      // For desktop devices, use the default camera
       mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
+        video: true,
       });
     } catch (e) {
       console.log("Standard getUserMedia failed, trying alternatives");
