@@ -24,7 +24,7 @@ bp = Blueprint(
 
 @bp.route("/", methods=["GET"])
 def index() -> str:
-    return render_template("imports/index.html")
+    return render_template("imports/tpl_import_index.html")
 
 
 @bp.route("/bbva", methods=["GET"])
