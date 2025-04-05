@@ -211,6 +211,16 @@ def import_from_receipts() -> tuple[Response, int]:
                 "value": result.document.inference.prediction.time.value,
                 "bbox": result.document.inference.prediction.time.bounding_box,
             },
+            "line_items": [{"value": item.description, "bbox": item.bounding_box} for item in result.document.inference.prediction.line_items],
+            # For validation
+            "date": {
+                "value": result.document.inference.prediction.date.value,
+                "bbox": result.document.inference.prediction.date.bounding_box,
+            },
+            "total_amount": {
+                "value": result.document.inference.prediction.total_amount.value,
+                "bbox": result.document.inference.prediction.total_amount.bounding_box,
+            },
         }
 
     return jsonify(

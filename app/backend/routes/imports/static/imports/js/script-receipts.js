@@ -266,6 +266,27 @@ function cropImage(originalImage, coords) {
   return tempCanvas.toDataURL();
 }
 
+async function processLineItems(data) {
+  const lineItemsContainer = document.querySelector("#receipt-line-items");
+  lineItemsContainer.innerHTML = "";
+
+  data.data.transaction.line_items.forEach((item, index) => {
+    const lineItem = document.createElement("div");
+    lineItem.innerHTML = `
+    <div class="mb-3 data-container" data-variable-name="${index}">
+        <div class="input-group">
+            <input type="text" class="form-control" id="receipt-${index}" value="${item.value}">
+            <div class="input-group-append">
+                <img class="img-fluid img-thumbnail" id="receipt-${index}-img" alt="image">
+            </div>
+        </div>
+    </div>
+    `;
+    lineItemsContainer.appendChild(lineItem);
+    displayValue(item, index);
+  });
+}
+
 async function displayReceiptData(data) {
   const receiptDataContainers = document.querySelectorAll(
     "#receipt-data-container .data-container"
@@ -275,6 +296,8 @@ async function displayReceiptData(data) {
     const variableName = container.getAttribute("data-variable-name");
     displayValue(data.data.transaction[variableName], variableName);
   });
+
+  await processLineItems(data);
 }
 
 async function handleReceiptProcessing() {
