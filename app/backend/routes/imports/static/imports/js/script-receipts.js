@@ -251,8 +251,14 @@ function cropImage(originalImage, coords) {
 }
 
 async function displayReceiptData(data) {
-  console.log(data);
-  displayValue(data.data.transaction.time, "time");
+  const receiptDataContainers = document.querySelectorAll(
+    "#receipt-data-container .data-container"
+  );
+
+  receiptDataContainers.forEach((container) => {
+    const variableName = container.getAttribute("data-variable-name");
+    displayValue(data.data.transaction[variableName], variableName);
+  });
 }
 
 async function handleReceiptProcessing() {

@@ -1,5 +1,5 @@
 {% macro receipt_value(variable_name, title, data) %}
-<div class="mb-3">
+<div class="mb-3 data-container" data-variable-name="{{ variable_name }}">
     <label for="receipt-{{ variable_name }}" class="form-label">{{ title }}</label>
     <div class="input-group">
         <input type="text" class="form-control" id="receipt-{{ variable_name }}">
