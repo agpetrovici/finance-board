@@ -1,7 +1,7 @@
 import json
-from datetime import date, datetime
+from datetime import datetime
 from decimal import Decimal
-
+from pathlib import Path
 from flask import Blueprint, Response
 from flask import render_template, jsonify
 from flask import request
@@ -9,6 +9,7 @@ from flask import current_app
 from mindee import Client
 
 from app.backend.models.db import db
+from app.backend.models.e_transaction import Transaction
 from app.backend.models.m_account import Account
 from app.backend.routes.imports.utils.bbva.process_bbva import get_new_movements_bbva
 from app.backend.routes.imports.utils.binance.get_account_balance import get_account_balance
@@ -18,7 +19,7 @@ from app.backend.routes.imports.utils.get_last_movement import get_last_movement
 from app.backend.routes.imports.utils.revolut.process_revolut import get_new_movements_revolut
 from app.backend.utils.receipts.prediction import make_receipt_prediction
 from app.backend.utils.receipts.transaction import get_transaction
-from app.backend.models.e_transaction import Transaction
+from app.backend.utils.receipts.utils import save_image, save_result
 
 bp = Blueprint(
     "imports",
@@ -200,7 +201,25 @@ def import_from_receipts() -> tuple[Response, int]:
     file_name = file.filename
 
     mindee_client = Client(api_key=current_app.config["MINDEE_API_KEY"])
+
+    # Save the receipt image
+    receipts_dir = Path(current_app.instance_path) / "receipts"
+    receipts_dir.mkdir(parents=True, exist_ok=True)
+
     result = make_receipt_prediction(mindee_client, data_input, file_name)
+
+    # Save the receipt image and the result for later debugging
+    save_image(receipts_dir, data_input, file_name)
+    save_result(receipts_dir, result, file_name)
+
+    _date = result.document.inference.prediction.date.value
+    _amount = result.document.inference.prediction.total_amount.value
+    if isinstance(_date, str):
+        _date = datetime.strptime(_date, "%Y-%m-%d").date()
+    if isinstance(_amount, float):
+        _amount = -Decimal(str(_amount))
+
+    transaction = get_transaction(_date, _amount)
 
     # Return the image file encoded in base64 within a JSON response
     data = {}
@@ -255,6 +274,8 @@ def update_receipt() -> tuple[Response, int]:
         try:
             time_parts = _time.split(":")
             _date = _date.replace(hour=int(time_parts[0]), minute=int(time_parts[1]))
+            if len(time_parts) > 2:  # Check if seconds are provided
+                _date = _date.replace(second=int(time_parts[2]))
         except (ValueError, IndexError):
             pass
 
@@ -262,6 +283,6 @@ def update_receipt() -> tuple[Response, int]:
     receipt.description = "\n".join([x for x in data.get("line_items") if x != ""])
 
     # Update the receipt
-    receipt.update(data)
+    db.session.commit()
 
     return jsonify({"status": "success", "message": "Receipt updated successfully."}), 200
