@@ -117,9 +117,79 @@ function displayBoundingBox(bbox) {
   };
 }
 
+function displayValue(data, variable_name) {
+  // Get the value from the data
+  const valueElement = document.querySelector(`#receipt-${variable_name}`);
+  const imgElement = document.querySelector(`#receipt-${variable_name}-img`);
+
+  valueElement.value = data.value;
+  // Check if we have valid bbox data
+  if (isValidBbox(data.bbox)) {
+    displayBoundingBox(data.bbox);
+    processReceiptCrop(data.bbox, imgElement);
+  } else {
+    // Hide the image if no valid bbox
+    imgElement.style.display = "none";
+  }
+}
+
+function isValidBbox(bbox) {
+  return bbox && Array.isArray(bbox) && bbox.length === 4;
+}
+
+function processReceiptCrop(bbox, valueElement) {
+  // Get the original image from file input
+  const originalImage = new Image();
+  originalImage.src = URL.createObjectURL(fileInput.files[0]);
+
+  originalImage.addEventListener("load", function () {
+    const cropCoordinates = calculateCropCoordinates(bbox, originalImage);
+    const croppedImage = cropImage(originalImage, cropCoordinates);
+
+    // Set the cropped image as the source for the value element
+    valueElement.src = croppedImage;
+    valueElement.style.display = "block";
+
+    // Clean up
+    URL.revokeObjectURL(originalImage.src);
+  });
+}
+
+function calculateCropCoordinates(bbox, originalImage) {
+  return {
+    x: bbox[0][0] * originalImage.width,
+    y: bbox[0][1] * originalImage.height,
+    width: (bbox[2][0] - bbox[0][0]) * originalImage.width,
+    height: (bbox[2][1] - bbox[0][1]) * originalImage.height,
+  };
+}
+
+function cropImage(originalImage, coords) {
+  // Create a temporary canvas for cropping
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = coords.width;
+  tempCanvas.height = coords.height;
+  const tempCtx = tempCanvas.getContext("2d");
+
+  // Draw the cropped portion to the temporary canvas
+  tempCtx.drawImage(
+    originalImage,
+    coords.x,
+    coords.y,
+    coords.width,
+    coords.height,
+    0,
+    0,
+    coords.width,
+    coords.height
+  );
+
+  return tempCanvas.toDataURL();
+}
+
 async function displayReceiptData(data) {
   console.log(data);
-  displayBoundingBox(data.data.transaction.time.bbox);
+  displayValue(data.data.transaction.time, "time");
 }
 
 async function handleReceiptProcessing() {

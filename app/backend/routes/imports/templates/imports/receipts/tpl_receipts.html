@@ -1,3 +1,5 @@
+{% from "imports/receipts/macro_receipt_value.html" import receipt_value %}
+
 {% extends "base.html" %}
 
 {% block title %}Import receipts | finance-board {% endblock %}
@@ -22,17 +24,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6" id="receipt-data-container">
-                                <p class="card-text">
-                                    <span class="placeholder col-7"></span>
-                                    <span class="placeholder col-4"></span>
-                                    <span class="placeholder col-4"></span>
-                                    <span class="placeholder col-6"></span>
-                                    <span class="placeholder col-8"></span>
-                                    <span class="placeholder col-8"></span>
-                                    <span class="placeholder col-2"></span>
-                                    <span class="placeholder col-2"></span>
-                                    <span class="placeholder col-4"></span>
-                                </p>
+                                {{ receipt_value("time", "Transaction Time", data) }}
                             </div>
                         </div>
                     </div>

@@ -1,0 +1,11 @@
+{% macro receipt_value(variable_name, title, data) %}
+<div class="mb-3">
+    <label for="receipt-{{ variable_name }}" class="form-label">{{ title }}</label>
+    <div class="input-group">
+        <input type="text" class="form-control" id="receipt-{{ variable_name }}">
+        <div class="input-group-append">
+            <img id="receipt-{{ variable_name }}-img" class="img-fluid img-thumbnail" alt="image">
+        </div>
+    </div>
+</div>
+{% endmacro %}
