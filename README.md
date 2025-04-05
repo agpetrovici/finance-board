@@ -20,7 +20,7 @@ Displays the transactions per month with details over tooltips.
 - Mobile
   - [![Watch the video](https://img.youtube.com/vi/u1pUBUBylOU/hqdefault.jpg)](https://www.youtube.com/watch?v=u1pUBUBylOU)
 
-Installation:
+## Installation
 
 1. Clone the repository.
 2. Install the dependencies defined in pyproject.toml.
