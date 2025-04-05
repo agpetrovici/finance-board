@@ -13,6 +13,13 @@ Displays the transactions per month with details over tooltips.
 
 ![Finance Board](./docs/finance-board-column-chart.png)
 
+## Data Import
+
+- Desktop
+  - [![Watch the video](https://img.youtube.com/vi/rdT5S6Wx1_Q/hqdefault.jpg)](https://www.youtube.com/watch?v=rdT5S6Wx1_Q)
+- Mobile
+  - [![Watch the video](https://img.youtube.com/vi/u1pUBUBylOU/hqdefault.jpg)](https://www.youtube.com/watch?v=u1pUBUBylOU)
+
 Installation:
 
 1. Clone the repository.
