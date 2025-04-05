@@ -14,6 +14,7 @@ Displays the transactions per month with details over tooltips.
 ![Finance Board](./docs/finance-board-column-chart.png)
 
 Installation:
+
 1. Clone the repository.
 2. Install the dependencies defined in pyproject.toml.
 3. Create the PostgreSQL database.
