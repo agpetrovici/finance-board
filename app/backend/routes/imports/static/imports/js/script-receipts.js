@@ -75,13 +75,12 @@ async function displayReceiptImage() {
   });
 }
 
-function displayBoundingBox(bbox) {
+function createRectangle(bbox) {
   if (!bbox || !Array.isArray(bbox) || bbox.length !== 4) {
     console.log("Invalid bbox:", bbox);
-    return;
+    return null;
   }
 
-  const ctx = receiptCanvas.getContext("2d");
   const scale = receiptCanvas.currentScale;
   const centerX = receiptCanvas.currentCenterX;
   const centerY = receiptCanvas.currentCenterY;
@@ -90,34 +89,90 @@ function displayBoundingBox(bbox) {
   const img = new Image();
   img.src = URL.createObjectURL(fileInput.files[0]);
 
-  img.onload = () => {
-    // Calculate the rectangle coordinates in canvas space
-    const x = centerX + bbox[0][0] * img.width * scale;
-    const y = centerY + bbox[0][1] * img.height * scale;
-    const width = (bbox[2][0] - bbox[0][0]) * img.width * scale;
-    const height = (bbox[2][1] - bbox[0][1]) * img.height * scale;
+  return new Promise((resolve) => {
+    img.addEventListener("load", function () {
+      // Calculate the rectangle coordinates in canvas space
+      const x = centerX + bbox[0][0] * img.width * scale;
+      const y = centerY + bbox[0][1] * img.height * scale;
+      const width = (bbox[2][0] - bbox[0][0]) * img.width * scale;
+      const height = (bbox[2][1] - bbox[0][1]) * img.height * scale;
 
-    // console.log("Drawing rectangle at:", {
-    //   x,
-    //   y,
-    //   width,
-    //   height,
-    //   scale,
-    //   centerX,
-    //   centerY,
-    // });
+      // Create and return a rectangle object
+      const rectangle = {
+        x,
+        y,
+        width,
+        height,
+        color: "red",
+        lineWidth: 2,
+        fill: "rgba(0, 0, 0, 0)",
+        draw(ctx) {
+          ctx.beginPath();
+          ctx.strokeStyle = this.color;
+          ctx.lineWidth = this.lineWidth;
+          ctx.strokeRect(this.x, this.y, this.width, this.height);
+        },
+        update(dx, dy) {
+          this.x += dx;
+          this.y += dy;
+        },
+      };
 
-    // Draw the rectangle
-    ctx.beginPath();
-    ctx.strokeStyle = "red";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, width, height);
+      // Draw the rectangle immediately
+      const ctx = receiptCanvas.getContext("2d");
+      rectangle.draw(ctx);
+
+      URL.revokeObjectURL(img.src);
+      resolve(rectangle);
+    });
+  });
+}
+
+function setRectangleFill(rectangle) {
+  const ctx = receiptCanvas.getContext("2d");
+  // Save the current state
+  ctx.save();
+
+  // Set fill style
+  ctx.fillStyle = "rgba(255, 0, 0, 0.2)";
+
+  // Fill the rectangle
+  ctx.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+
+  // Restore the context to previous state
+  ctx.restore();
+
+  rectangle.draw(ctx);
+}
+
+function removeRectangleFill(rectangle) {
+  const ctx = receiptCanvas.getContext("2d");
+
+  // Redraw the receipt image
+  const img = new Image();
+  img.src = URL.createObjectURL(fileInput.files[0]);
+
+  img.onload = function () {
+    ctx.drawImage(
+      img,
+      receiptCanvas.currentCenterX,
+      receiptCanvas.currentCenterY,
+      img.width * receiptCanvas.currentScale,
+      img.height * receiptCanvas.currentScale
+    );
+
+    // Add semi-transparent grey fill
+    ctx.fillStyle = "rgba(128, 128, 128, 0.1)"; // Light grey with 10% opacity
+    ctx.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+
+    // Redraw the outline of the rectangle
+    rectangle.draw(ctx);
 
     URL.revokeObjectURL(img.src);
   };
 }
 
-function displayValue(data, variable_name) {
+async function displayValue(data, variable_name) {
   // Get the value from the data
   const valueElement = document.querySelector(`#receipt-${variable_name}`);
   const imgElement = document.querySelector(`#receipt-${variable_name}-img`);
@@ -125,8 +180,16 @@ function displayValue(data, variable_name) {
   valueElement.value = data.value;
   // Check if we have valid bbox data
   if (isValidBbox(data.bbox)) {
-    displayBoundingBox(data.bbox);
+    let foundRectangle = await createRectangle(data.bbox);
     processReceiptCrop(data.bbox, imgElement);
+
+    // Add event listener to highlight the rectangle when the input field is focused
+    valueElement.addEventListener("focus", function () {
+      setRectangleFill(foundRectangle);
+    });
+    valueElement.addEventListener("blur", function () {
+      removeRectangleFill(foundRectangle);
+    });
   } else {
     // Hide the image if no valid bbox
     imgElement.style.display = "none";
