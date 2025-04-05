@@ -293,7 +293,7 @@ async function processList(data, variable_name) {
   });
 }
 
-async function displayReceiptData(data) {
+export async function displayReceiptData(data) {
   const receiptDataContainers = document.querySelectorAll(
     "#receipt-data-container .data-container"
   );

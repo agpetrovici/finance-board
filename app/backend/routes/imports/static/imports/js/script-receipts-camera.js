@@ -1,5 +1,9 @@
 import { appendAlert } from "../../../../../../static/js/alerts.js";
-import { displayReceiptImage, getReceiptData } from "./script-receipts.js";
+import {
+  displayReceiptImage,
+  displayReceiptData,
+  getReceiptData,
+} from "./script-receipts.js";
 
 let stream = null;
 const receiptDataContainer = document.querySelector("#receipt-data-container");
@@ -67,23 +71,35 @@ export async function handleCameraUsage() {
     // Handle the file selection
     mobileFileInput.addEventListener("change", async (event) => {
       if (event.target.files && event.target.files[0]) {
-        // Copy the file to the main file input
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(event.target.files[0]);
-        fileInput.files = dataTransfer.files;
+        try {
+          // Create a compressed version of the image before processing
+          const file = event.target.files[0];
+          const compressedFile = await compressImage(file);
 
-        // Process the image
-        await displayReceiptImage();
-        const data = await getReceiptData();
+          // Copy the compressed file to the main file input
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(compressedFile);
+          fileInput.files = dataTransfer.files;
 
-        if (data) {
-          document.querySelector("#receipt-id").value =
-            data.data.transaction_pk;
-          await displayReceiptData(data);
+          // Process the image
+          await displayReceiptImage();
+          const data = await getReceiptData();
+
+          if (data) {
+            document.querySelector("#receipt-id").value =
+              data.data.transaction_pk;
+            await displayReceiptData(data);
+          }
+        } catch (error) {
+          appendAlert("Error processing image: " + error.message, "danger");
+          console.error("Image processing error:", error);
+        } finally {
+          // Clean up
+          document.body.removeChild(mobileFileInput);
+          // Force garbage collection of the file object
+          event.target.value = "";
         }
       }
-      // Clean up
-      document.body.removeChild(mobileFileInput);
     });
 
     // Trigger the file input click
@@ -108,9 +124,13 @@ export async function handleCameraUsage() {
     let mediaStream;
 
     try {
-      // For desktop devices, use the default camera
+      // For desktop devices, use the default camera with reduced resolution
       mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: {
+          width: { ideal: 1280, max: 1280 },
+          height: { ideal: 720, max: 720 },
+          frameRate: { ideal: 15, max: 30 },
+        },
       });
     } catch (e) {
       console.log("Standard getUserMedia failed, trying alternatives");
@@ -165,10 +185,68 @@ export async function handleCameraUsage() {
   }
 }
 
+// Function to compress image before processing
+async function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        // Calculate new dimensions while maintaining aspect ratio
+        const MAX_WIDTH = 2000;
+        const MAX_HEIGHT = 2000;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to blob with reduced quality
+        canvas.toBlob(
+          (blob) => {
+            resolve(
+              new File([blob], file.name, {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              })
+            );
+          },
+          "image/jpeg",
+          0.7 // Reduced quality for smaller file size
+        );
+      };
+      img.onerror = reject;
+      img.src = event.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 // Function to stop the camera
 function stopCamera() {
   if (stream) {
-    stream.getTracks().forEach((track) => track.stop());
+    stream.getTracks().forEach((track) => {
+      track.stop();
+      track.enabled = false;
+    });
     stream = null;
 
     // Restore the canvas
@@ -182,6 +260,11 @@ function stopCamera() {
     cameraButton.classList.add("btn-primary");
     cameraButton.removeEventListener("click", stopCamera);
     cameraButton.addEventListener("click", handleCameraUsage);
+
+    // Force garbage collection
+    if (window.gc) {
+      window.gc();
+    }
   }
 }
 
