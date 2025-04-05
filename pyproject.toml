@@ -19,6 +19,9 @@ requests = "^2.32.3"
 python-binance = "^1.0.27"  # external dependency to connect to binance
 orjson = "^3.10.14"  # used by python-binance even if is not a direct dependency
 
+# Receipts processing API
+mindee = "^4.19.1"
+
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"
 mypy = "^1.14.1"
