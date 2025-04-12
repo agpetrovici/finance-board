@@ -5,13 +5,13 @@ from decimal import Decimal
 from typing import Dict, List, Tuple
 
 from flask import Blueprint, Response, jsonify
-
 from app.backend.models.db import db
 from app.backend.models.e_transaction import Transaction
 from app.backend.models.m_account import Account
 from app.backend.utils.bank_statement import get_deposits
 from app.backend.utils.bank_statement import get_monthly_transactions
 from app.backend.utils.transaction_series import get_transaction_series, test_get_transaction_series
+from app.backend.routes.api.apex import ApexLineChartData
 
 # Get the absolute path to the static folder
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -91,11 +91,8 @@ def get_bank_statement() -> Response:
             }
         )
 
-    output = {
-        "datasets": datasets,
-        "labels": labels,
-    }
-    return jsonify(output)
+    output = ApexLineChartData(labels, datasets)
+    return jsonify(output.to_dict())
 
 
 @bp.route("/get-bank-statement-by-category", methods=["POST"])
@@ -135,11 +132,8 @@ def get_bank_statement_by_category() -> Response:
         },
     ]
 
-    output = {
-        "datasets": datasets,
-        "labels": labels,
-    }
-    return jsonify(output)
+    output = ApexLineChartData(labels, datasets)
+    return jsonify(output.to_dict())
 
 
 @bp.route("/test-get-bank-statement", methods=["POST"])
@@ -161,11 +155,8 @@ def test_get_bank_statement() -> Response:
 
     labels = ["January", "February", "March", "April", "May", "June"]
 
-    output = {
-        "datasets": datasets,
-        "labels": labels,
-    }
-    return jsonify(output)
+    output = ApexLineChartData(labels, datasets)
+    return jsonify(output.to_dict())
 
 
 @bp.route("/get-transaction-by-day", methods=["POST"])
