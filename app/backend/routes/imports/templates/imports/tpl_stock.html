@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% from "imports/ui_select_account.html" import generate_account_options %}
+
+{% block title %}finance-board | Stock Data{% endblock %}
+
+{% block title_inline %}Stock{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="mb-3">
+                {{ generate_account_options(accounts) }}
+                <label for="stockData" class="form-label">Paste HTML Stock Data</label>
+                <textarea class="form-control" id="stockData" rows="10" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" id="stock-import">Import</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block aditional_scripts %}
+<script type="module" src="{{ url_for('imports.static', filename='imports/js/script-stock.js') }}"></script>
+{% endblock %}

@@ -17,6 +17,7 @@
                         <li><a href="{{ url_for('imports.import_norma43') }}">Norma43</a></li>
                         <li><a href="{{ url_for('imports.import_binance') }}">Binance</a></li>
                         <li><a href="{{ url_for('imports.import_receipts') }}">Receipts</a></li>
+                        <li><a href="{{ url_for('imports.import_stock') }}">Stock</a></li>
                     </ul>
                 </div>
             </div>
@@ -29,4 +30,5 @@
 {% endblock %}
 
 {% block aditional_scripts %}
+<script src="{{ url_for('static', filename='js/imports/script-stock.js') }}"></script>
 {% endblock %}

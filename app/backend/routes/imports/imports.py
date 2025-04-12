@@ -9,14 +9,17 @@ from flask import current_app
 from mindee import Client
 
 from app.backend.models.db import db
+from app.backend.models.e_stock_transaction import StockTransaction
 from app.backend.models.e_transaction import Transaction
 from app.backend.models.m_account import Account
+from app.backend.models.m_stock_account import StockAccount
 from app.backend.routes.imports.utils.bbva.process_bbva import get_new_movements_bbva
 from app.backend.routes.imports.utils.binance.get_account_balance import get_account_balance
 from app.backend.routes.imports.utils.csb43.get_csb43_movements import get_new_movements_from_BankStatement
 from app.backend.routes.imports.utils.csb43.process_csb43 import parse_aes43
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement
 from app.backend.routes.imports.utils.revolut.process_revolut import get_new_movements_revolut
+from app.backend.routes.imports.utils.stock.stock import parse_stock_data
 from app.backend.utils.receipts.prediction import make_receipt_prediction
 from app.backend.utils.receipts.transaction import get_transaction
 from app.backend.utils.receipts.utils import save_image, save_result
@@ -286,3 +289,45 @@ def update_receipt() -> tuple[Response, int]:
     db.session.commit()
 
     return jsonify({"status": "success", "message": "Receipt updated successfully."}), 200
+
+
+@bp.route("/stock")
+def import_stock() -> str:
+    accounts = StockAccount.query.all()
+    return render_template("imports/tpl_stock.html", accounts=accounts)
+
+
+@bp.route("/from-stock", methods=["POST"])
+def import_from_stock() -> tuple[Response, int]:
+    data = request.json
+    if data is None:
+        return jsonify({"status": "error", "message": "No data received."}), 400
+
+    text = data.get("text")
+    account_pk = data.get("accountPk")
+    if not text or not account_pk:
+        return jsonify({"status": "error", "message": "No HTML content provided."}), 400
+
+    # Get stock account
+    stock_account = StockAccount.query.filter_by(account_pk=account_pk).first()
+    if stock_account is None:
+        return jsonify({"status": "error", "message": "Stock account not found."}), 400
+    try:
+        new_stock_data = parse_stock_data(text, stock_account)
+        # Check if transactions already exist
+        for transaction in new_stock_data:
+            existing = StockTransaction.query.filter_by(
+                fk_stock_account=transaction.fk_stock_account, order_id=transaction.order_id, execution_date=transaction.execution_date
+            ).first()
+
+            if existing:
+                return jsonify({"status": "error", "message": f"Transaction with order ID {transaction.order_id} already exists"}), 400
+
+        # Save to database
+        db.session.add_all(new_stock_data)
+        db.session.commit()
+        return jsonify({"status": "success", "message": f"Successfully imported {len(new_stock_data)} stock records."}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": f"Error processing stock data: {str(e)}"}), 400
