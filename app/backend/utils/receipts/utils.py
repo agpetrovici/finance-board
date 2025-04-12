@@ -16,7 +16,8 @@ def save_image(receipts_dir: Path, image_data: bytes, file_name: str) -> Path:
     return image_path
 
 
-def save_result(file_path: Path, result: Any) -> Path:
+def save_result(receipts_dir: Path, result: Any, file_name: str) -> Path:
+    file_path = receipts_dir / file_name
     pickle_filename = file_path.with_suffix(".pkl")
     with open(pickle_filename, "wb") as f:
         pickle.dump(result, f)
