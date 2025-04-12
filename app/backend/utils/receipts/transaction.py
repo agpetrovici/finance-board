@@ -2,15 +2,15 @@ from datetime import date
 from decimal import Decimal
 
 from app.backend.models.db import db
-from app.backend.models.e_transaction import Transaction
+from app.backend.models.e_transaction import FiatTransaction
 
 
-def get_transaction(transaction_date: date, amount: Decimal) -> Transaction:
+def get_transaction(transaction_date: date, amount: Decimal) -> FiatTransaction:
     transaction = (
-        db.session.query(Transaction)
+        db.session.query(FiatTransaction)
         .filter(
-            db.func.date(Transaction.date) == transaction_date,
-            Transaction.amount == amount,
+            db.func.date(FiatTransaction.date) == transaction_date,
+            FiatTransaction.amount == amount,
         )
         .first()
     )

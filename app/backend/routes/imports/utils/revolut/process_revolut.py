@@ -1,12 +1,12 @@
 from typing import Any, List
 
-from app.backend.models.e_transaction import Transaction
+from app.backend.models.e_transaction import FiatTransaction
 from app.backend.models.m_account import Account
 from app.backend.routes.imports.utils.revolut.models import RevolutTransaction
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement
 
 
-def get_new_movements_revolut(data: List[dict[str, Any]], accounts: List[Account]) -> list[Transaction]:
+def get_new_movements_revolut(data: List[dict[str, Any]], accounts: List[Account]) -> list[FiatTransaction]:
     transactions = RevolutTransaction.from_dict(data)
     movements = []
     account_data = {}
@@ -25,12 +25,12 @@ def get_new_movements_revolut(data: List[dict[str, Any]], accounts: List[Account
         current_bank_id = transaction.account.id
         if account_data[current_bank_id]["get_movements"]:
             pass
-        elif isinstance(account_data[current_bank_id]["last_movement"], Transaction) and transaction.id == account_data[current_bank_id]["last_movement"].bank_id:  # type: ignore
+        elif isinstance(account_data[current_bank_id]["last_movement"], FiatTransaction) and transaction.id == account_data[current_bank_id]["last_movement"].bank_id:  # type: ignore
             account_data[current_bank_id]["get_movements"] = True
             continue
         if account_data[current_bank_id]["get_movements"]:
             movements.append(
-                Transaction(
+                FiatTransaction(
                     balance=transaction.balance,
                     account_fk=account_data[current_bank_id]["data"].account_pk,  # type: ignore
                     amount=transaction.amount,

@@ -6,7 +6,7 @@ from typing import Dict, List, Set, Tuple
 
 from app.backend.models.m_isin import Isin
 from app.backend.models.e_stock_transaction import StockTransaction
-from app.backend.models.e_transaction import Transaction
+from app.backend.models.e_transaction import FiatTransaction
 from app.backend.routes.api.apex import ApexColumnChartData
 from app.backend.utils.bank_statement import get_deposits
 
@@ -34,19 +34,19 @@ def get_transaction_series() -> ApexColumnChartData:
     series: List[Category] = []
     dates: List[str] = []
 
-    transactions = Transaction.query.filter(Transaction.date >= datetime.now().replace(year=datetime.now().year - 1)).all()
+    transactions = FiatTransaction.query.filter(FiatTransaction.date >= datetime.now().replace(year=datetime.now().year - 1)).all()
     if not transactions:
         return ApexColumnChartData(series, dates)
 
     deposits = get_deposits()
     for deposit in deposits:
         # TODOL Add category and subcategory in Deposit table
-        transactions.append(Transaction(date=deposit.date_start, name=deposit.name, category="Deposit", subcategory="Deposit", amount=deposit.amount))
+        transactions.append(FiatTransaction(date=deposit.date_start, name=deposit.name, category="Deposit", subcategory="Deposit", amount=deposit.amount))
 
     # Group transactions by date and category/subcategory
     categories_set: Set[str] = set()
     subcategories_set: Set[str] = set()
-    transaction_groups: Dict[str, Dict[str, Dict[str, List[Transaction]]]] = {}
+    transaction_groups: Dict[str, Dict[str, Dict[str, List[FiatTransaction]]]] = {}
 
     transaction_dates: Set[datetime] = set()
     for t in transactions:

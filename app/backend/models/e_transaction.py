@@ -1,7 +1,7 @@
 from app.backend.models.db import db
 
 
-class Transaction(db.Model):  # type: ignore[name-defined, misc]
+class FiatTransaction(db.Model):  # type: ignore[name-defined, misc]
     __tablename__ = "e_fiat_transaction"
 
     transaction_pk = db.Column(db.Integer, primary_key=True, autoincrement=True)

@@ -37,7 +37,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
         from app.backend.models.e_deposit import Deposit  # noqa: F401
         from app.backend.models.e_stock_portfolio import StockPortfolio  # noqa: F401
         from app.backend.models.e_stock_transaction import StockTransaction  # noqa: F401
-        from app.backend.models.e_transaction import Transaction  # noqa: F401
+        from app.backend.models.e_transaction import FiatTransaction  # noqa: F401
 
         db.create_all()
 

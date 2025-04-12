@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Dict, List, Tuple
 
 from app.backend.models.db import db
-from app.backend.models.e_transaction import Transaction
+from app.backend.models.e_transaction import FiatTransaction
 from app.backend.models.m_account import Account
 from app.backend.routes.api.apex import ApexLineChartData
 from app.backend.utils.bank_statement import get_deposits
@@ -98,7 +98,7 @@ def get_bank_statement() -> Response:
 
 @bp.route("/get-bank-statement-by-category", methods=["POST"])
 def get_bank_statement_by_category() -> Response:
-    transactions = Transaction.query.all()
+    transactions = FiatTransaction.query.all()
 
     days = list(set(transaction.date for transaction in transactions if transaction.date))
     days.sort()

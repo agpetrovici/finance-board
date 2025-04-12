@@ -10,7 +10,7 @@ from mindee import Client
 
 from app.backend.models.db import db
 from app.backend.models.e_stock_transaction import StockTransaction
-from app.backend.models.e_transaction import Transaction
+from app.backend.models.e_transaction import FiatTransaction
 from app.backend.models.m_account import Account
 from app.backend.models.m_stock_account import StockAccount
 from app.backend.routes.imports.utils.bbva.process_bbva import get_new_movements_bbva
@@ -266,7 +266,7 @@ def update_receipt() -> tuple[Response, int]:
         return jsonify({"status": "error", "message": "No transaction pk provided."}), 400
 
     # Find receipt in db
-    receipt: Transaction = Transaction.query.filter_by(transaction_pk=transaction_pk).first()
+    receipt: FiatTransaction = FiatTransaction.query.filter_by(transaction_pk=transaction_pk).first()
     if receipt is None:
         return jsonify({"status": "error", "message": "Receipt not found."}), 400
 

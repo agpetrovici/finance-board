@@ -2,13 +2,13 @@ from decimal import Decimal
 from typing import List, Optional, Tuple
 
 from app.backend.models.m_account import Account
-from app.backend.models.e_transaction import Transaction
+from app.backend.models.e_transaction import FiatTransaction
 from app.backend.routes.imports.utils.csb43.process_csb43 import BankStatement
 from app.backend.routes.imports.utils.csb43.process_csb43 import Transaction as TransactionCsb43
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement
 
 
-def get_new_movements(data: List[TransactionCsb43], last_transaction: Optional[Transaction], account_pk: int) -> list[Transaction]:
+def get_new_movements(data: List[TransactionCsb43], last_transaction: Optional[FiatTransaction], account_pk: int) -> list[FiatTransaction]:
     movements = []
     balance = last_transaction.balance
 
@@ -21,7 +21,7 @@ def get_new_movements(data: List[TransactionCsb43], last_transaction: Optional[T
         if get_movements:
             balance += transaction.amount
             movements.append(
-                Transaction(
+                FiatTransaction(
                     balance=balance,
                     account_fk=account_pk,
                     amount=transaction.amount,
@@ -33,15 +33,15 @@ def get_new_movements(data: List[TransactionCsb43], last_transaction: Optional[T
                     bank_id=transaction.reference1,
                 )
             )
-        elif isinstance(last_transaction, Transaction) and (transaction.reference1 == last_transaction.bank_id):
+        elif isinstance(last_transaction, FiatTransaction) and (transaction.reference1 == last_transaction.bank_id):
             get_movements = True
             continue
 
     return movements
 
 
-def get_new_movements_from_BankStatement(data: BankStatement) -> Tuple[bool, List[str], List[Transaction]]:
-    movements: List[Transaction] = []
+def get_new_movements_from_BankStatement(data: BankStatement) -> Tuple[bool, List[str], List[FiatTransaction]]:
+    movements: List[FiatTransaction] = []
     status: bool = True
     messages: List[str] = []
 
