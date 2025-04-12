@@ -2,7 +2,7 @@ from app.backend.models.db import db
 
 
 class Account(db.Model):  # type: ignore[name-defined, misc]
-    __tablename__ = "account"
+    __tablename__ = "m_fiat_account"
 
     account_pk = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(100))

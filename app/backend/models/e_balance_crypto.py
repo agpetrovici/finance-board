@@ -2,9 +2,9 @@ from app.backend.models.db import db
 
 
 class BalanceCrypto(db.Model):  # type: ignore[name-defined, misc]
-    __tablename__ = "balance_crypto"
+    __tablename__ = "e_crypto_balance"
 
-    fk_account_crypto = db.Column(db.Integer, db.ForeignKey("account_crypto.pk_account_crypto"), nullable=False)
+    fk_account_crypto = db.Column(db.Integer, db.ForeignKey("m_crypto_account.pk_account_crypto"), nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
     asset = db.Column(db.String(100), nullable=False)
 

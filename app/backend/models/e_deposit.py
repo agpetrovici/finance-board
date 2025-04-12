@@ -2,10 +2,10 @@ from app.backend.models.db import db
 
 
 class Deposit(db.Model):  # type: ignore[name-defined, misc]
-    __tablename__ = "deposit"
+    __tablename__ = "e_deposit"
 
     pk_movement = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    fk_account = db.Column(db.Integer, db.ForeignKey("account.account_pk"), nullable=False)
+    fk_account = db.Column(db.Integer, db.ForeignKey("m_fiat_account.account_pk"), nullable=False)
     amount = db.Column(db.Numeric(10, 2), nullable=False)
     balance = db.Column(db.Numeric(10, 2), nullable=False)
     interest_maturity = db.Column(db.Numeric(10, 2), nullable=False)
