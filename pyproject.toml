@@ -22,6 +22,7 @@ orjson = "^3.10.14"  # used by python-binance even if is not a direct dependency
 
 # Receipts processing API
 mindee = "^4.19.1"
+bs4 = "^0.0.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"
