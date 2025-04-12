@@ -26,8 +26,17 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     with app.app_context():
         from app.backend.models.m_account import Account  # noqa: F401
         from app.backend.models.m_account_crypto import AccountCrypto  # noqa: F401
+        from app.backend.models.m_currency import Currency  # noqa: F401
+        from app.backend.models.m_execution_venue import ExecutionVenue  # noqa: F401
+        from app.backend.models.m_isin import Isin  # noqa: F401
+        from app.backend.models.m_order_class import OrderClass  # noqa: F401
+        from app.backend.models.m_order_type import OrderType  # noqa: F401
+        from app.backend.models.m_reference_exchange import ReferenceExchange  # noqa: F401
+        from app.backend.models.m_stock_account import StockAccount  # noqa: F401
         from app.backend.models.e_balance_crypto import BalanceCrypto  # noqa: F401
         from app.backend.models.e_deposit import Deposit  # noqa: F401
+        from app.backend.models.e_stock_portfolio import StockPortfolio  # noqa: F401
+        from app.backend.models.e_stock_transaction import StockTransaction  # noqa: F401
         from app.backend.models.e_transaction import Transaction  # noqa: F401
 
         db.create_all()
