@@ -4,7 +4,9 @@ from dateutil.rrule import rrule, MONTHLY
 from decimal import Decimal
 from typing import Dict, List, Set, Tuple
 
+from app.backend.models.e_stock_transaction import StockTransaction
 from app.backend.models.e_transaction import Transaction
+from app.backend.routes.api.apex import ApexColumnChartData
 from app.backend.utils.bank_statement import get_deposits
 
 
@@ -27,13 +29,13 @@ class Category:
     data: List[Subcategory]
 
 
-def get_transaction_series() -> Tuple[List[Category], List[str]]:
+def get_transaction_series() -> ApexColumnChartData:
     series: List[Category] = []
     dates: List[str] = []
 
     transactions = Transaction.query.filter(Transaction.date >= datetime.now().replace(year=datetime.now().year - 1)).all()
     if not transactions:
-        return series, dates
+        return ApexColumnChartData(series, dates)
 
     deposits = get_deposits()
     for deposit in deposits:
@@ -97,7 +99,7 @@ def get_transaction_series() -> Tuple[List[Category], List[str]]:
             subcategory.data.sort(key=lambda dp: dp.x)
         series.append(Category(category=category, data=subcategories_data))
 
-    return series, dates_sorted
+    return ApexColumnChartData(series, dates_sorted)
 
 
 def test_get_transaction_series() -> Tuple[List[Category], List[str]]:
@@ -225,4 +227,66 @@ def test_get_transaction_series() -> Tuple[List[Category], List[str]]:
         ),
     ]
 
-    return series, categories
+    return ApexColumnChartData(series, categories)
+
+
+def get_stock_transaction_series() -> ApexColumnChartData:
+    series: List[Category] = []
+    dates: List[str] = []
+
+    stock_transactions = StockTransaction.query.filter(StockTransaction.execution_date >= datetime.now().replace(year=datetime.now().year - 1)).all()
+    if not stock_transactions:
+        return ApexColumnChartData(series, dates)
+
+    # Group transactions by date and category/subcategory
+    categories_set: Set[str] = set()
+    subcategories_set: Set[str] = set()
+    transaction_groups: Dict[str, Dict[str, Dict[str, List[StockTransaction]]]] = {}
+
+    transaction_dates: Set[datetime] = set()
+    for t in stock_transactions:
+        date_str = t.execution_date.replace(day=1).strftime("%Y-%m-%d")
+        category = "stock"
+        subcategory = t.fk_isin
+        categories_set.add(category)
+        subcategories_set.add(subcategory)
+        transaction_dates.add(t.execution_date.replace(day=1))
+
+        if date_str not in transaction_groups:
+            transaction_groups[date_str] = {}
+
+        if category not in transaction_groups[date_str]:
+            transaction_groups[date_str][category] = {}
+
+        if subcategory not in transaction_groups[date_str][category]:
+            transaction_groups[date_str][category][subcategory] = []
+
+        transaction_groups[date_str][category][subcategory].append(t)
+
+    categories_sorted: List[str] = sorted(list(categories_set))
+    subcategories_sorted: List[str] = sorted(list(subcategories_set))
+    transaction_dates_sorted: List[datetime] = sorted(list(transaction_dates))
+    min_date = min(transaction_dates_sorted)
+    max_date = max(transaction_dates_sorted)
+    dates = [date.strftime("%Y-%m-%d") for date in rrule(MONTHLY, dtstart=min_date, until=max_date)]
+
+    # Create series grouped by category
+    for category in categories_sorted:
+        subcategories_data: List[Subcategory] = []
+        for subcategory in subcategories_sorted:
+            subcategory_data: List[DataPoint] = []
+            for date in dates:
+                amount = Decimal("0")
+                tooltips = []
+                if date in transaction_groups and category in transaction_groups[date] and subcategory in transaction_groups[date][category]:
+                    transactions = transaction_groups[date][category][subcategory]
+                    amount = sum(t.quantity for t in transactions)
+                    tooltips = [f"{t.fk_isin}: {t.quantity}" for t in transactions]
+
+                subcategory_data.append(DataPoint(x=date, y=amount, tooltip=tooltips))
+
+            subcategories_data.append(Subcategory(name=subcategory, data=subcategory_data))
+
+        series.append(Category(category=category, data=subcategories_data))
+
+    return ApexColumnChartData(series, dates)

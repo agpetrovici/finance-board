@@ -12,6 +12,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Financial Overview</h5>
                     <canvas id="finance-chart"></canvas>
+                    <div id="column-chart-stock"></div>
                     <div id="column-chart-categories"></div>
                 </div>
             </div>
@@ -27,4 +28,5 @@
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script type="module" src="{{ url_for('dashboard.static', filename='dashboard/js/dashboard.js') }}"></script>
 <script type="module" src="{{ url_for('dashboard.static', filename='dashboard/js/chart-graph-stacked.js') }}"></script>
+<script type="module" src="{{ url_for('dashboard.static', filename='dashboard/js/chart-stock.js') }}"></script>
 {% endblock %}

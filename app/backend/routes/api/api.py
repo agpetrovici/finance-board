@@ -4,14 +4,15 @@ from dateutil.rrule import rrule, MONTHLY
 from decimal import Decimal
 from typing import Dict, List, Tuple
 
-from flask import Blueprint, Response, jsonify
 from app.backend.models.db import db
 from app.backend.models.e_transaction import Transaction
 from app.backend.models.m_account import Account
+from app.backend.routes.api.apex import ApexLineChartData
 from app.backend.utils.bank_statement import get_deposits
 from app.backend.utils.bank_statement import get_monthly_transactions
+from app.backend.utils.transaction_series import get_stock_transaction_series
 from app.backend.utils.transaction_series import get_transaction_series, test_get_transaction_series
-from app.backend.routes.api.apex import ApexLineChartData
+from flask import Blueprint, Response, jsonify
 
 # Get the absolute path to the static folder
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -161,11 +162,17 @@ def test_get_bank_statement() -> Response:
 
 @bp.route("/get-transaction-by-day", methods=["POST"])
 def get_transaction_by_day() -> Tuple[Response, int]:
-    series, categories = get_transaction_series()
-    return jsonify({"series": series, "categories": categories}), 200
+    output = get_transaction_series()
+    return jsonify(output.to_dict()), 200
 
 
 @bp.route("/test-get-transaction-by-day", methods=["POST"])
 def test_get_transaction_by_day() -> Tuple[Response, int]:
-    series, categories = test_get_transaction_series()
-    return jsonify({"series": series, "categories": categories}), 200
+    output = test_get_transaction_series()
+    return jsonify(output.to_dict()), 200
+
+
+@bp.route("/get-stock-statement", methods=["POST"])
+def get_stock_transactions() -> Tuple[Response, int]:
+    output = get_stock_transaction_series()
+    return jsonify(output.to_dict())
