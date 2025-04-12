@@ -4,6 +4,7 @@ from dateutil.rrule import rrule, MONTHLY
 from decimal import Decimal
 from typing import Dict, List, Set, Tuple
 
+from app.backend.models.m_isin import Isin
 from app.backend.models.e_stock_transaction import StockTransaction
 from app.backend.models.e_transaction import Transaction
 from app.backend.routes.api.apex import ApexColumnChartData
@@ -274,6 +275,7 @@ def get_stock_transaction_series() -> ApexColumnChartData:
     for category in categories_sorted:
         subcategories_data: List[Subcategory] = []
         for subcategory in subcategories_sorted:
+            isin = Isin.query.filter(Isin.pk_isin == subcategory).first()
             subcategory_data: List[DataPoint] = []
             for date in dates:
                 amount = Decimal("0")
@@ -281,11 +283,11 @@ def get_stock_transaction_series() -> ApexColumnChartData:
                 if date in transaction_groups and category in transaction_groups[date] and subcategory in transaction_groups[date][category]:
                     transactions = transaction_groups[date][category][subcategory]
                     amount = sum(t.quantity for t in transactions)
-                    tooltips = [f"{t.fk_isin}: {t.quantity}" for t in transactions]
+                    tooltips = [f"{isin.name}: {t.quantity}" for t in transactions]
 
                 subcategory_data.append(DataPoint(x=date, y=amount, tooltip=tooltips))
 
-            subcategories_data.append(Subcategory(name=subcategory, data=subcategory_data))
+            subcategories_data.append(Subcategory(name=isin.name, data=subcategory_data))
 
         series.append(Category(category=category, data=subcategories_data))
 
