@@ -1,18 +1,17 @@
 import os
 from datetime import datetime
-from dateutil.rrule import rrule, MONTHLY
 from decimal import Decimal
 from typing import Dict, List, Tuple
+
+from dateutil.rrule import MONTHLY, rrule
+from flask import Blueprint, Response, jsonify
 
 from app.backend.models.db import db
 from app.backend.models.e_transaction import FiatTransaction
 from app.backend.models.m_account import Account
 from app.backend.routes.api.apex import ApexLineChartData
-from app.backend.utils.bank_statement import get_deposits
-from app.backend.utils.bank_statement import get_monthly_transactions
-from app.backend.utils.transaction_series import get_stock_transaction_series
-from app.backend.utils.transaction_series import get_transaction_series, test_get_transaction_series
-from flask import Blueprint, Response, jsonify
+from app.backend.utils.bank_statement import get_deposits, get_monthly_transactions
+from app.backend.utils.transaction_series import get_stock_transaction_series, get_transaction_series, test_get_transaction_series
 
 # Get the absolute path to the static folder
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -32,10 +31,16 @@ def get_bank_statement() -> Response:
     # Prepare amount_by_date based on transaction and deposit data
     min_transaction_date = min(transaction[2] for transaction in transactions)
     max_transaction_date = max(transaction[2] for transaction in transactions)
-    min_deposit_date = min(deposit.date_start.replace(day=1) for deposit in deposits)
-    max_deposit_date = max(deposit.date_end.replace(day=1) for deposit in deposits)
-    min_date = min(min_transaction_date, min_deposit_date)
-    max_date = max(max_transaction_date, max_deposit_date)
+
+    if deposits:
+        min_deposit_date = min(deposit.date_start.replace(day=1) for deposit in deposits)
+        max_deposit_date = max(deposit.date_end.replace(day=1) for deposit in deposits)
+        min_date = min(min_transaction_date, min_deposit_date)
+        max_date = max(max_transaction_date, max_deposit_date)
+    else:
+        min_date = min_transaction_date
+        max_date = max_transaction_date
+
     for date in rrule(MONTHLY, dtstart=min_date, until=max_date):
         if date not in amount_by_date:
             amount_by_date[date] = dict()
