@@ -17,6 +17,7 @@ from app.backend.routes.imports.utils.binance.get_account_balance import get_acc
 from app.backend.routes.imports.utils.csb43.get_csb43_movements import get_new_movements_from_BankStatement
 from app.backend.routes.imports.utils.csb43.process_csb43 import parse_aes43
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement
+from app.backend.routes.imports.utils.imagin.process_imagin import process_imagin
 from app.backend.routes.imports.utils.revolut.process_revolut import get_new_movements_revolut
 from app.backend.routes.imports.utils.stock.stock import parse_stock_data
 from app.backend.utils.receipts.prediction import make_receipt_prediction
@@ -108,6 +109,42 @@ def import_bankinter_process() -> tuple[Response, int]:
 
     # Then get the new movements from the excel file
     new_movements = process_bankinter(file_buffer)
+    if not new_movements:
+        return jsonify({"status": "error", "message": "No new movements."}), 400
+
+    # Then save the new movements to the database
+    db.session.add_all(new_movements)
+    db.session.commit()
+    return jsonify({"status": "success", "message": f"Added {len(new_movements)} movements."}), 200
+
+
+@bp.route("/imagin")
+def import_imagin() -> str:
+    return render_template("imports/tpl_imagin.html")
+
+
+@bp.route("/from-imagin", methods=["POST"])
+def import_imagin_process() -> tuple[Response, int]:
+    data = request.json
+    if data is None:
+        return jsonify({"status": "error", "message": "No data received."}), 400
+
+    file = data.get("file")
+    # Get the file content as binary to create the dataframe
+    if file is None:
+        return jsonify({"status": "error", "message": "No file provided."}), 400
+
+    try:
+        import base64
+        import io
+
+        file_bytes = base64.b64decode(file)
+        file_buffer = io.BytesIO(file_bytes)
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Could not process file: {str(e)}"}), 400
+
+    # Then get the new movements from the excel file
+    new_movements = process_imagin(file_buffer)
     if not new_movements:
         return jsonify({"status": "error", "message": "No new movements."}), 400
 
