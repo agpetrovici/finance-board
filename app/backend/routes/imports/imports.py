@@ -2,10 +2,8 @@ import json
 from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
-from flask import Blueprint, Response
-from flask import render_template, jsonify
-from flask import request
-from flask import current_app
+
+from flask import Blueprint, Response, current_app, jsonify, render_template, request
 from mindee import Client
 
 from app.backend.models.db import db
@@ -13,6 +11,7 @@ from app.backend.models.e_stock_transaction import StockTransaction
 from app.backend.models.e_transaction import FiatTransaction
 from app.backend.models.m_account import Account
 from app.backend.models.m_stock_account import StockAccount
+from app.backend.routes.imports.utils.bankinter.process_bankinter import process_bankinter
 from app.backend.routes.imports.utils.bbva.process_bbva import get_new_movements_bbva
 from app.backend.routes.imports.utils.binance.get_account_balance import get_account_balance
 from app.backend.routes.imports.utils.csb43.get_csb43_movements import get_new_movements_from_BankStatement
@@ -73,6 +72,42 @@ def import_bbva_process() -> tuple[Response, int]:
 
     # Then get the new movements from the dict
     new_movements = get_new_movements_bbva(data, last_movement, account_pk)
+    if not new_movements:
+        return jsonify({"status": "error", "message": "No new movements."}), 400
+
+    # Then save the new movements to the database
+    db.session.add_all(new_movements)
+    db.session.commit()
+    return jsonify({"status": "success", "message": f"Added {len(new_movements)} movements."}), 200
+
+
+@bp.route("/bankinter")
+def import_bankinter() -> str:
+    return render_template("imports/tpl_bankinter.html")
+
+
+@bp.route("/from-bankinter", methods=["POST"])
+def import_bankinter_process() -> tuple[Response, int]:
+    data = request.json
+    if data is None:
+        return jsonify({"status": "error", "message": "No data received."}), 400
+
+    file = data.get("file")
+    # Get the file content as binary to create the dataframe
+    if file is None:
+        return jsonify({"status": "error", "message": "No file provided."}), 400
+
+    try:
+        import base64
+        import io
+
+        file_bytes = base64.b64decode(file)
+        file_buffer = io.BytesIO(file_bytes)
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Could not process file: {str(e)}"}), 400
+
+    # Then get the new movements from the excel file
+    new_movements = process_bankinter(file_buffer)
     if not new_movements:
         return jsonify({"status": "error", "message": "No new movements."}), 400
 
