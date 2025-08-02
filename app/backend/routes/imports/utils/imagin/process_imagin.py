@@ -42,6 +42,7 @@ def process_imagin(file_buffer: io.BytesIO) -> list[FiatTransaction]:
     reader2 = csv.DictReader(csv2.splitlines(), delimiter=";")
     data_rows1 = list(reader1)
     data_rows2 = list(reader2)
+    data_rows2 = list(reversed(data_rows2))
 
     iban = data_rows1[0]["IBAN"]
     account = Account.query.filter_by(account_number=iban).first()
