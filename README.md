@@ -26,4 +26,5 @@ Displays the transactions per month with details over tooltips.
 2. Install the dependencies defined in pyproject.toml.
 3. Create the PostgreSQL database.
 4. Define the environment variables in `.env` defined in `.env.example`.
-5. Run the Flask backend `main.py`.
+5. Generate a self signed `cert.pem` and `key.pem` with `openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 365`
+6. Run the Flask backend `main.py`.
