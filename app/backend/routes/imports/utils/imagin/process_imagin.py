@@ -1,6 +1,7 @@
 import csv
 import io
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional
 
 from app.backend.models.e_transaction import FiatTransaction
@@ -48,9 +49,9 @@ def process_imagin(file_buffer: io.BytesIO) -> list[FiatTransaction]:
     last_transaction = get_last_movement(account.account_pk)
     transactions = [
         FiatTransaction(
-            date=datetime.strptime(x["Fecha"], "%d/%m/%Y").date(),
-            amount=float(x["Importe"].replace(".", "").replace(",", ".").replace("EUR", "")),
-            balance=float(x["Saldo disponible"].replace(".", "").replace(",", ".").replace("EUR", "")),
+            date=datetime.strptime(x["Fecha"], "%d/%m/%Y"),
+            amount=Decimal(x["Importe"].replace(".", "").replace(",", ".").replace("EUR", "")),
+            balance=Decimal(x["Saldo disponible"].replace(".", "").replace(",", ".").replace("EUR", "")),
             concept=x["Concepto"].strip(),
             account_fk=account.account_pk,
         )
