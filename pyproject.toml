@@ -20,6 +20,10 @@ requests = "^2.32.3"
 python-binance = "^1.0.27"  # external dependency to connect to binance
 orjson = "^3.10.14"  # used by python-binance even if is not a direct dependency
 
+# xls files
+pandas = "^2.3.1"
+xlrd = "^2.0.2"
+
 # Receipts processing API
 mindee = "^4.19.1"
 bs4 = "^0.0.2"
