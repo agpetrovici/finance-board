@@ -5,15 +5,15 @@ class StockTransaction(db.Model):  # type: ignore[name-defined, misc]
     __tablename__ = "e_stock_transaction"
 
     pk_stock_transaction = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    fk_stock_account = db.Column(db.Integer, db.ForeignKey("m_stock_account.account_pk"), nullable=False)
+    fk_stock_account = db.Column(db.Integer, db.ForeignKey("m_stock_account.pk_stock_account"), nullable=False)
 
     order_id = db.Column(db.String(100), nullable=False)  # id stored by the broker
     execution_date = db.Column(db.DateTime, nullable=False)
     fk_isin = db.Column(db.String(12), db.ForeignKey("m_isin.pk_isin"), nullable=False)
     fk_order_type = db.Column(db.Integer, db.ForeignKey("m_order_type.pk_order_type"), nullable=False)
     fk_order_class = db.Column(db.Integer, db.ForeignKey("m_order_class.pk_order_class"), nullable=False)
-    fk_reference_exchange = db.Column(db.Integer, db.ForeignKey("m_reference_exchange.pk_reference_exchange"), nullable=True)
-    fk_execution_venue = db.Column(db.Integer, db.ForeignKey("m_execution_venue.pk_execution_venue"), nullable=True)
+    fk_reference_exchange = db.Column(db.String(3), db.ForeignKey("m_reference_exchange.pk_reference_exchange"), nullable=True)
+    fk_execution_venue = db.Column(db.String(10), db.ForeignKey("m_execution_venue.pk_execution_venue"), nullable=True)
     quantity = db.Column(db.Integer, nullable=False)
 
     # Broker price per share

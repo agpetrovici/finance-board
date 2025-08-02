@@ -4,7 +4,7 @@ from app.backend.models.db import db
 class StockAccount(db.Model):  # type: ignore[name-defined, misc]
     __tablename__ = "m_stock_account"
 
-    account_pk = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    pk_stock_account = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(100))
     description = db.Column(db.String(255))
 

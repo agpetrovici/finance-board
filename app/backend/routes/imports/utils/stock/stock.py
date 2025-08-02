@@ -1,6 +1,7 @@
-from bs4 import BeautifulSoup
 from datetime import datetime
 from decimal import Decimal
+
+from bs4 import BeautifulSoup
 
 from app.backend.models.db import db
 from app.backend.models.e_stock_transaction import StockTransaction
@@ -140,7 +141,7 @@ def parse_stock_data(text: str, stock_account: StockAccount) -> list[StockTransa
 
     # Create transaction
     transaction = StockTransaction(
-        fk_stock_account=stock_account.account_pk,
+        fk_stock_account=stock_account.pk_stock_account,
         order_id=order_id,
         execution_date=execution_date,
         fk_isin=fk_isin,
