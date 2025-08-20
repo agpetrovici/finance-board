@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, List, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -126,12 +126,12 @@ class RevolutTransaction:
             state=data["state"],
             started_date=data["startedDate"],
             updated_date=data["updatedDate"],
-            completed_date=data["completedDate"],
+            completed_date=data.get("completedDate", ""),
             created_date=data["createdDate"],
             currency=data["currency"],
             amount=data["amount"] / 100,
             fee=data["fee"] / 100,
-            balance=data["balance"] / 100,
+            balance=data.get("balance", 0) / 100,
             description=data["description"],
             tag=data["tag"],
             category=data["category"],

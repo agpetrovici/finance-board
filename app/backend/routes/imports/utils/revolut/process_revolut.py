@@ -1,13 +1,22 @@
+import logging
 from typing import Any, List
 
 from app.backend.models.e_transaction import FiatTransaction
 from app.backend.models.m_account import Account
-from app.backend.routes.imports.utils.revolut.models import RevolutTransaction
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement
+from app.backend.routes.imports.utils.revolut.models import RevolutTransaction
 
 
 def get_new_movements_revolut(data: List[dict[str, Any]], accounts: List[Account]) -> list[FiatTransaction]:
-    transactions = RevolutTransaction.from_dict(data)
+    transactions: list[RevolutTransaction] = RevolutTransaction.from_dict(data)
+    valid_transactions: list[RevolutTransaction] = []
+    for x in transactions:
+        if x.state == "COMPLETED":
+            valid_transactions.append(x)
+        elif x.state == "DECLINED":
+            logging.error(f"Transaction ({x}) was DECLINED !")
+        else:
+            logging.error(f"Transaction ({x}) was not handled !")
     movements = []
     account_data = {}
     for x in accounts:
@@ -21,7 +30,7 @@ def get_new_movements_revolut(data: List[dict[str, Any]], accounts: List[Account
             }
     del accounts
 
-    for transaction in transactions:
+    for transaction in valid_transactions:
         current_bank_id = transaction.account.id
         if account_data[current_bank_id]["get_movements"]:
             pass
