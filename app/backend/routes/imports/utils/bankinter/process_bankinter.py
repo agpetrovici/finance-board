@@ -1,5 +1,6 @@
 import io
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional
 
 import pandas as pd
@@ -37,10 +38,10 @@ def df_to_FiatTransaction(df: pd.DataFrame, account_fk: int) -> FiatTransaction:
     for ix, row in df.loc[4:].iterrows():
         data.append(
             FiatTransaction(
-                balance=row[4],
+                balance=Decimal(row[4]),
                 account_fk=account_fk,
-                amount=row[3],
-                date=datetime.strptime(row[1], "%d/%m/%Y").date(),
+                amount=Decimal(row[3]),
+                date=datetime.strptime(row[1], "%d/%m/%Y"),
                 concept=row[2],
             )
         )
@@ -48,7 +49,7 @@ def df_to_FiatTransaction(df: pd.DataFrame, account_fk: int) -> FiatTransaction:
 
 
 def process_bankinter(file_buffer: io.BytesIO) -> list[FiatTransaction]:
-    df = pd.read_excel(file_buffer, header=None)
+    df = pd.read_excel(file_buffer, header=None, dtype="str")
     iban_str = df.iloc[0, 0]
     iban = iban_str.split("IBAN: ")[-1]
     account = Account.query.filter_by(account_number=iban).first()
