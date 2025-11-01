@@ -4,3 +4,7 @@ __pycache__
 # files
 .env
 *.pem
+
+#### pyenv
+# added by pyenv to identify the pyenv to use in this folder
+.python-version
