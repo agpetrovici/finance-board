@@ -23,6 +23,7 @@ orjson = "^3.10.14"  # used by python-binance even if is not a direct dependency
 # xls files
 pandas = "^2.3.1"
 xlrd = "^2.0.2"
+openpyxl = "^3.1.5"
 
 # Receipts processing API
 mindee = "^4.19.1"
