@@ -35,7 +35,7 @@ def get_new_movements_bankinter(data: list[FiatTransaction], last_movement: Opti
 
 def df_to_FiatTransaction(df: pd.DataFrame, account_fk: int) -> FiatTransaction:
     data = []
-    for ix, row in df.loc[4:].iterrows():
+    for ix, row in df.loc[15:].iterrows():
         data.append(
             FiatTransaction(
                 balance=Decimal(row[4]),
@@ -45,13 +45,14 @@ def df_to_FiatTransaction(df: pd.DataFrame, account_fk: int) -> FiatTransaction:
                 concept=row[2],
             )
         )
+    data = data[::-1]
     return data
 
 
 def process_bankinter(file_buffer: io.BytesIO) -> list[FiatTransaction]:
     df = pd.read_excel(file_buffer, header=None, dtype="str")
     iban_str = df.iloc[0, 0]
-    iban = iban_str.split("IBAN: ")[-1]
+    iban = iban_str.split("MOVIMIENTOS DE LA CUENTA ")[-1]
     account = Account.query.filter_by(account_number=iban).first()
     if account is None:
         return None
