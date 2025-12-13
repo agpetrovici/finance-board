@@ -33,9 +33,19 @@ def get_new_movements_bankinter(data: list[FiatTransaction], last_movement: Opti
     return movements
 
 
-def df_to_FiatTransaction(df: pd.DataFrame, account_fk: int) -> FiatTransaction:
+def df_to_FiatTransaction(df: pd.DataFrame, account_fk: int) -> list[FiatTransaction]:
     data = []
-    for ix, row in df.loc[15:].iterrows():
+
+    # We need to find dynamically the row where the actual values begin since the header may contain pending orders
+    ix_of_values = None
+    for ix, row in df.iterrows():
+        if row[0] == "Fecha contable" and row[1] == "Fecha valor" and row[2] == "Descripción" and row[3] == "Importe" and row[4] == "Saldo" and row[5] == "Divisa":
+            ix_of_values = ix
+            ix_of_values += 1  # So it begins at the next row, not at the title itself
+    if ix_of_values is None:
+        raise Exception("The format of the excel file has changed !")
+
+    for ix, row in df.loc[ix_of_values:].iterrows():
         data.append(
             FiatTransaction(
                 balance=Decimal(row[4]),
