@@ -4,7 +4,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from flask import Blueprint, Response, current_app, jsonify, render_template, request
-from mindee import Client
+from mindee import ClientV2
 
 from app.backend.models.db import db
 from app.backend.models.e_stock_transaction import StockTransaction
@@ -23,6 +23,7 @@ from app.backend.routes.imports.utils.stock.stock import parse_stock_data
 from app.backend.utils.receipts.prediction import make_receipt_prediction
 from app.backend.utils.receipts.transaction import get_transaction
 from app.backend.utils.receipts.utils import save_image, save_result
+from app.backend.routes.imports.utils.mindee_utils import polygon_to_bbox
 
 bp = Blueprint(
     "imports",
@@ -275,20 +276,22 @@ def import_from_receipts() -> tuple[Response, int]:
     data_input: bytes = file.read()
     file_name = file.filename
 
-    mindee_client = Client(api_key=current_app.config["MINDEE_API_KEY"])
+    # Init a new client
+    mindee_client = ClientV2(api_key=current_app.config["MINDEE_API_KEY"])
+    model_id = current_app.config["MINDEE_MODEL_ID"]
 
     # Save the receipt image
     receipts_dir = Path(current_app.instance_path) / "receipts"
     receipts_dir.mkdir(parents=True, exist_ok=True)
 
-    result = make_receipt_prediction(mindee_client, data_input, file_name)
+    fields = make_receipt_prediction(model_id, mindee_client, data_input, file_name)
 
     # Save the receipt image and the result for later debugging
     save_image(receipts_dir, data_input, file_name)
-    save_result(receipts_dir, result, file_name)
+    save_result(receipts_dir, fields, file_name)
 
-    _date = result.document.inference.prediction.date.value
-    _amount = result.document.inference.prediction.total_amount.value
+    _date = fields["date"].value
+    _amount = fields["total_amount"].value
     if isinstance(_date, str):
         _date = datetime.strptime(_date, "%Y-%m-%d").date()
     if isinstance(_amount, float):
@@ -303,18 +306,24 @@ def import_from_receipts() -> tuple[Response, int]:
         data["transaction"] = {
             # Data to be updated by the user
             "time": {
-                "value": result.document.inference.prediction.time.value,
-                "bbox": result.document.inference.prediction.time.bounding_box,
+                "value": fields["time"].value,
+                "bbox": polygon_to_bbox(fields["time"].locations[0].polygon),
             },
-            "line_items": [{"value": item.description, "bbox": item.bounding_box} for item in result.document.inference.prediction.line_items],
+            "line_items": [
+                {
+                    "value": item.fields['description'].value,
+                    "bbox": polygon_to_bbox(item.fields['total_price'].locations[0].polygon),
+                }
+                for item in fields["line_items"].object_items
+            ],
             # For validation
             "date": {
-                "value": result.document.inference.prediction.date.value,
-                "bbox": result.document.inference.prediction.date.bounding_box,
+                "value": fields["date"].value,
+                "bbox": polygon_to_bbox(fields["date"].locations[0].polygon),
             },
             "total_amount": {
-                "value": result.document.inference.prediction.total_amount.value,
-                "bbox": result.document.inference.prediction.total_amount.bounding_box,
+                "value": fields["total_amount"].value,
+                "bbox": polygon_to_bbox(fields["total_amount"].locations[0].polygon),
             },
         }
 

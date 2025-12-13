@@ -6,3 +6,4 @@ class Config:
     EXPLAIN_TEMPLATE_LOADING = False
     TEMPLATES_AUTO_RELOAD = True
     MINDEE_API_KEY = getenv("MINDEE_API_KEY")
+    MINDEE_MODEL_ID = getenv("MINDEE_MODEL_ID")

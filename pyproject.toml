@@ -26,7 +26,7 @@ xlrd = "^2.0.2"
 openpyxl = "^3.1.5"
 
 # Receipts processing API
-mindee = "^4.19.1"
+mindee = "^4.31.0"
 bs4 = "^0.0.2"
 
 [tool.poetry.group.dev.dependencies]
