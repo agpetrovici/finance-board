@@ -18,6 +18,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     from app.backend.models.e_balance_crypto import BalanceCrypto  # noqa: F401
     from app.backend.models.e_deposit import Deposit  # noqa: F401
     from app.backend.models.e_invoice import Invoice  # noqa: F401
+    from app.backend.models.e_real_estate_land_plot import RealEstateLandPlot  # noqa: F401
+    from app.backend.models.e_real_estate_land_plot_comparable import RealEstateLandPlotComparable  # noqa: F401
     from app.backend.models.e_stock_portfolio import StockPortfolio  # noqa: F401
     from app.backend.models.e_stock_transaction import StockTransaction  # noqa: F401
     from app.backend.models.e_transaction import FiatTransaction  # noqa: F401
