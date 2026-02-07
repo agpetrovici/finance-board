@@ -71,13 +71,13 @@ sudo nano /etc/postgresql/*/main/pg_hba.conf
 
 Find the line:
 
-```
+```text
 local   all             all                                     peer
 ```
 
 Replace it with:
 
-```
+```text
 local   all             all                                     md5
 ```
 
