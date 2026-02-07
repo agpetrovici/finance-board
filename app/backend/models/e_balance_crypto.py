@@ -1,17 +1,20 @@
-from app.backend.models.db import db
+from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, PrimaryKeyConstraint, String
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.backend.models.db import Base
 
 
-class BalanceCrypto(db.Model):  # type: ignore[name-defined, misc]
+class BalanceCrypto(Base):
     __tablename__ = "e_crypto_balance"
 
-    fk_account_crypto = db.Column(db.Integer, db.ForeignKey("m_crypto_account.pk_account_crypto"), nullable=False)
-    timestamp = db.Column(db.DateTime, nullable=False)
-    asset = db.Column(db.String(100), nullable=False)
+    fk_account_crypto: Mapped[int] = mapped_column(Integer, ForeignKey("m_crypto_account.pk_account_crypto"), nullable=False)
+    timestamp: Mapped[str] = mapped_column(DateTime, nullable=False)
+    asset: Mapped[str] = mapped_column(String(100), nullable=False)
 
-    free = db.Column(db.Numeric(10, 2), nullable=False)
-    locked = db.Column(db.Numeric(10, 2), nullable=False)
+    free: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    locked: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
 
-    __table_args__ = (db.PrimaryKeyConstraint(fk_account_crypto, timestamp, asset),)
+    __table_args__ = (PrimaryKeyConstraint("fk_account_crypto", "timestamp", "asset"),)
 
     def __repr__(self) -> str:
-        return f"<Deposit {self.date_creation} {self.description} {self.amount}>"
+        return f"<BalanceCrypto {self.timestamp} {self.asset} {self.free}>"

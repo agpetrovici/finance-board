@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import Optional
 
 import pandas as pd
+from sqlalchemy.orm import Session
 
 from app.backend.models.e_transaction import FiatTransaction
 from app.backend.models.m_account import Account
@@ -59,14 +60,14 @@ def df_to_FiatTransaction(df: pd.DataFrame, account_fk: int) -> list[FiatTransac
     return data
 
 
-def process_bankinter(file_buffer: io.BytesIO) -> list[FiatTransaction]:
+def process_bankinter(session: Session, file_buffer: io.BytesIO) -> list[FiatTransaction]:
     df = pd.read_excel(file_buffer, header=None, dtype="str")
     iban_str = df.iloc[0, 0]
     iban = iban_str.split("MOVIMIENTOS DE LA CUENTA ")[-1]
-    account = Account.query.filter_by(account_number=iban).first()
+    account = session.query(Account).filter_by(account_number=iban).first()
     if account is None:
         return None
-    last_transaction = get_last_movement(account.account_pk)
+    last_transaction = get_last_movement(session, account.account_pk)
     transactions = df_to_FiatTransaction(df, account.account_pk)
     if last_transaction is None:
         return transactions

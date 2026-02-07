@@ -6,15 +6,26 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import uvicorn  # noqa: E402
+
 from app.backend.app import create_app  # noqa: E402
-from app.backend.config import Config  # noqa: E402
 
 sys.path.append(str(Path(__file__).parent.parent))
 sys.path.append(str(Path(__file__).parent))
 
+app = create_app()
+
 if __name__ == "__main__":
-    app = create_app(Config)
-    port_raw = os.getenv("FLASK_PORT")
-    if isinstance(port_raw, str):
-        port = int(port_raw)
-        app.run(port=port, host=os.getenv("FLASK_HOST"), ssl_context=("cert.pem", "key.pem"))
+    port_raw = os.getenv("FASTAPI_PORT")
+    host = os.getenv("FASTAPI_HOST")
+    port = int(port_raw) if port_raw else 8000
+    ssl_certfile = "cert.pem" if Path("cert.pem").exists() else None
+    ssl_keyfile = "key.pem" if Path("key.pem").exists() else None
+    uvicorn.run(
+        "main:app",
+        host=host,
+        port=port,
+        ssl_certfile=ssl_certfile,
+        ssl_keyfile=ssl_keyfile,
+        reload=True,
+    )

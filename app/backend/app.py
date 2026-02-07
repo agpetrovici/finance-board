@@ -1,50 +1,64 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 
-from flask import Flask, redirect, url_for
-from werkzeug.wrappers.response import Response
+from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
-from app.backend.config import Config
-from app.backend.models.db import db
-from app.backend.routes.api.api import bp as bp_api
-from app.backend.routes.dashboard.dashboard import bp as bp_dashboard
-from app.backend.routes.imports.imports import bp as bp_imports
+from app.backend.models.db import Base, engine
+from app.backend.routes.api.api import router as router_api
+from app.backend.routes.dashboard.dashboard import router as router_dashboard
+from app.backend.routes.imports.imports import router as router_imports
 
 
-def create_app(config_class: type[Config] = Config) -> Flask:
-    template_dir = Path(__file__).parent / "templates"
-    static_dir = Path(__file__).parent / "static"
-    app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
-    app.config.from_object(config_class)
-    db.init_app(app)
-
-    # Register blueprints
-    app.register_blueprint(bp_api)
-    app.register_blueprint(bp_dashboard)
-    app.register_blueprint(bp_imports)
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    # Import all models so Base.metadata knows about them
+    from app.backend.models.e_balance_crypto import BalanceCrypto  # noqa: F401
+    from app.backend.models.e_deposit import Deposit  # noqa: F401
+    from app.backend.models.e_invoice import Invoice  # noqa: F401
+    from app.backend.models.e_stock_portfolio import StockPortfolio  # noqa: F401
+    from app.backend.models.e_stock_transaction import StockTransaction  # noqa: F401
+    from app.backend.models.e_transaction import FiatTransaction  # noqa: F401
+    from app.backend.models.m_account import Account  # noqa: F401
+    from app.backend.models.m_account_crypto import AccountCrypto  # noqa: F401
+    from app.backend.models.m_client import Client  # noqa: F401
+    from app.backend.models.m_currency import Currency  # noqa: F401
+    from app.backend.models.m_execution_venue import ExecutionVenue  # noqa: F401
+    from app.backend.models.m_isin import Isin  # noqa: F401
+    from app.backend.models.m_order_class import OrderClass  # noqa: F401
+    from app.backend.models.m_order_type import OrderType  # noqa: F401
+    from app.backend.models.m_reference_exchange import ReferenceExchange  # noqa: F401
+    from app.backend.models.m_stock_account import StockAccount  # noqa: F401
 
     # Create all tables
-    with app.app_context():
-        from app.backend.models.e_balance_crypto import BalanceCrypto  # noqa: F401
-        from app.backend.models.e_deposit import Deposit  # noqa: F401
-        from app.backend.models.e_invoice import Invoice  # noqa: F401
-        from app.backend.models.e_stock_portfolio import StockPortfolio  # noqa: F401
-        from app.backend.models.e_stock_transaction import StockTransaction  # noqa: F401
-        from app.backend.models.e_transaction import FiatTransaction  # noqa: F401
-        from app.backend.models.m_account import Account  # noqa: F401
-        from app.backend.models.m_account_crypto import AccountCrypto  # noqa: F401
-        from app.backend.models.m_client import Client  # noqa: F401
-        from app.backend.models.m_currency import Currency  # noqa: F401
-        from app.backend.models.m_execution_venue import ExecutionVenue  # noqa: F401
-        from app.backend.models.m_isin import Isin  # noqa: F401
-        from app.backend.models.m_order_class import OrderClass  # noqa: F401
-        from app.backend.models.m_order_type import OrderType  # noqa: F401
-        from app.backend.models.m_reference_exchange import ReferenceExchange  # noqa: F401
-        from app.backend.models.m_stock_account import StockAccount  # noqa: F401
+    Base.metadata.create_all(bind=engine)
+    yield
 
-        db.create_all()
 
-    @app.route("/")
-    def index() -> Response:
-        return redirect(url_for("dashboard.get_dashboard"))
+def create_app() -> FastAPI:
+    app = FastAPI(lifespan=lifespan)
+
+    # Mount static files for each blueprint-equivalent
+    static_dir = Path(__file__).parent / "static"
+    dashboard_static = Path(__file__).parent / "routes" / "dashboard" / "static"
+    imports_static = Path(__file__).parent / "routes" / "imports" / "static"
+
+    if static_dir.exists():
+        app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+    if dashboard_static.exists():
+        app.mount("/dashboard/static", StaticFiles(directory=str(dashboard_static)), name="dashboard_static")
+    if imports_static.exists():
+        app.mount("/imports/static", StaticFiles(directory=str(imports_static)), name="imports_static")
+
+    # Register routers
+    app.include_router(router_api)
+    app.include_router(router_dashboard)
+    app.include_router(router_imports)
+
+    @app.get("/")
+    def index() -> RedirectResponse:
+        return RedirectResponse(url="/dashboard/")
 
     return app

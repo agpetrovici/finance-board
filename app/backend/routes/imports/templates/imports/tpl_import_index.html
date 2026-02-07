@@ -12,14 +12,14 @@
                 <div class="card-body">
                     <h5 class="card-title">Data import</h5>
                     <ul>
-                        <li><a href="{{ url_for('imports.import_bbva') }}">BBVA</a></li>
-                        <li><a href="{{ url_for('imports.import_bankinter') }}">Bankinter</a></li>
-                        <li><a href="{{ url_for('imports.import_imagin') }}">Imagin</a></li>
-                        <li><a href="{{ url_for('imports.import_revolut') }}">Revolut</a></li>
-                        <li><a href="{{ url_for('imports.import_norma43') }}">Norma43</a></li>
-                        <li><a href="{{ url_for('imports.import_binance') }}">Binance</a></li>
-                        <li><a href="{{ url_for('imports.import_receipts') }}">Receipts</a></li>
-                        <li><a href="{{ url_for('imports.import_stock') }}">Stock</a></li>
+                        <li><a href="{{ url_for('import_bbva') }}">BBVA</a></li>
+                        <li><a href="{{ url_for('import_bankinter') }}">Bankinter</a></li>
+                        <li><a href="{{ url_for('import_imagin') }}">Imagin</a></li>
+                        <li><a href="{{ url_for('import_revolut') }}">Revolut</a></li>
+                        <li><a href="{{ url_for('import_norma43') }}">Norma43</a></li>
+                        <li><a href="{{ url_for('import_binance') }}">Binance</a></li>
+                        <li><a href="{{ url_for('import_receipts') }}">Receipts</a></li>
+                        <li><a href="{{ url_for('import_stock') }}">Stock</a></li>
                     </ul>
                 </div>
             </div>
@@ -32,5 +32,5 @@
 {% endblock %}
 
 {% block aditional_scripts %}
-<script src="{{ url_for('static', filename='js/imports/script-stock.js') }}"></script>
+<script src="{{ url_for('static', path='js/imports/script-stock.js') }}"></script>
 {% endblock %}

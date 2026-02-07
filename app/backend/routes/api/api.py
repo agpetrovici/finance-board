@@ -1,30 +1,26 @@
-import os
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List
 
 from dateutil.rrule import MONTHLY, rrule
-from flask import Blueprint, Response, jsonify
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
-from app.backend.models.db import db
+from app.backend.models.db import get_db
 from app.backend.models.e_transaction import FiatTransaction
 from app.backend.models.m_account import Account
 from app.backend.routes.api.apex import ApexLineChartData
 from app.backend.utils.bank_statement import get_deposits, get_monthly_transactions
 from app.backend.utils.transaction_series import get_stock_transaction_series, get_transaction_series, test_get_transaction_series
 
-# Get the absolute path to the static folder
-current_dir = os.path.dirname(os.path.abspath(__file__))
-static_folder = os.path.join(current_dir, "static")
-
-bp = Blueprint("api", __name__, url_prefix="/api")
+router = APIRouter(prefix="/api", tags=["api"])
 
 
-@bp.route("/get-bank-statement", methods=["POST"])
-def get_bank_statement() -> Response:
+@router.post("/get-bank-statement")
+def get_bank_statement(session: Session = Depends(get_db)) -> dict[str, Any]:
     # Group transactions by date and calculate totals for last day of each month
-    transactions = get_monthly_transactions(db.session)
-    deposits = get_deposits()
+    transactions = get_monthly_transactions(session)
+    deposits = get_deposits(session)
 
     # Prepare amount by date
     amount_by_date: Dict[datetime, Dict[int, Decimal]] = dict()
@@ -57,7 +53,7 @@ def get_bank_statement() -> Response:
 
     # Prepare amount by account
     labels: List[str] = list()
-    accounts_data = Account.query.all()
+    accounts_data = session.query(Account).all()
     accounts_pks = {account.account_pk: account for account in accounts_data}
     amount_by_account: Dict[int, List[Decimal]] = {account_pk: list() for account_pk in accounts_pks}
     amount_total: List[Decimal] = list()
@@ -98,12 +94,12 @@ def get_bank_statement() -> Response:
         )
 
     output = ApexLineChartData(labels, datasets)
-    return jsonify(output.to_dict())
+    return output.to_dict()
 
 
-@bp.route("/get-bank-statement-by-category", methods=["POST"])
-def get_bank_statement_by_category() -> Response:
-    transactions = FiatTransaction.query.all()
+@router.post("/get-bank-statement-by-category")
+def get_bank_statement_by_category(session: Session = Depends(get_db)) -> dict[str, Any]:
+    transactions = session.query(FiatTransaction).all()
 
     days = list(set(transaction.date for transaction in transactions if transaction.date))
     days.sort()
@@ -139,11 +135,11 @@ def get_bank_statement_by_category() -> Response:
     ]
 
     output = ApexLineChartData(labels, datasets)
-    return jsonify(output.to_dict())
+    return output.to_dict()
 
 
-@bp.route("/test-get-bank-statement", methods=["POST"])
-def test_get_bank_statement() -> Response:
+@router.post("/test-get-bank-statement")
+def test_get_bank_statement() -> dict[str, Any]:
     datasets = [
         {
             "label": "Income",
@@ -162,22 +158,22 @@ def test_get_bank_statement() -> Response:
     labels = ["January", "February", "March", "April", "May", "June"]
 
     output = ApexLineChartData(labels, datasets)
-    return jsonify(output.to_dict())
+    return output.to_dict()
 
 
-@bp.route("/get-transaction-by-day", methods=["POST"])
-def get_transaction_by_day() -> Tuple[Response, int]:
-    output = get_transaction_series()
-    return jsonify(output.to_dict()), 200
+@router.post("/get-transaction-by-day")
+def get_transaction_by_day(session: Session = Depends(get_db)) -> dict[str, Any]:
+    output = get_transaction_series(session)
+    return output.to_dict()
 
 
-@bp.route("/test-get-transaction-by-day", methods=["POST"])
-def test_get_transaction_by_day() -> Tuple[Response, int]:
+@router.post("/test-get-transaction-by-day")
+def test_get_transaction_by_day() -> dict[str, Any]:
     output = test_get_transaction_series()
-    return jsonify(output.to_dict()), 200
+    return output.to_dict()
 
 
-@bp.route("/get-stock-statement", methods=["POST"])
-def get_stock_transactions() -> Tuple[Response, int]:
-    output = get_stock_transaction_series()
-    return jsonify(output.to_dict())
+@router.post("/get-stock-statement")
+def get_stock_transactions(session: Session = Depends(get_db)) -> dict[str, Any]:
+    output = get_stock_transaction_series(session)
+    return output.to_dict()

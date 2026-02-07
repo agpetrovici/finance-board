@@ -5,22 +5,19 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "flask app",
+            "name": "web app",
             "type": "debugpy",
             "request": "launch",
-            "module": "flask",
-            "env": {
-                "FLASK_APP": "main.py",
-                "FLASK_DEBUG": "0"
-            },
+            "module": "uvicorn",
             "args": [
-                "run",
+                "main:app",
                 "--host=0.0.0.0",
-                "--cert=cert.pem",
-                "--key=key.pem",
-                "--no-debugger",
-                "--no-reload"
+                "--port=8000",
+                "--ssl-keyfile=key.pem",
+                "--ssl-certfile=cert.pem",
+                "--reload"
             ],
+            "env": {},
             "jinja": true,
             "autoStartBrowser": false
         }

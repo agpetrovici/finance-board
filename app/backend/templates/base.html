@@ -5,18 +5,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ url_for('static', path='img/favicon.ico') }}" type="image/x-icon">
 
     <title>{% block title %}finance-board{% endblock %}</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='extensions/bootstrap/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='extensions/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet"
-        href="{{ url_for('static', filename='extensions/bootstrap-icons/bootstrap-icons.min.css') }}">
+        href="{{ url_for('static', path='extensions/bootstrap-icons/bootstrap-icons.min.css') }}">
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/colors.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebars.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/fonts.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/colors.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/sidebars.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/styles.css') }}">
 
     {% block aditional_styles %}{% endblock %}
 </head>
@@ -88,7 +88,7 @@
                         </button>
                         <div class="collapse" id="account-collapse">
                             <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-                                <li><a href="{{ url_for('imports.index') }}"
+                                <li><a href="{{ url_for('imports_index') }}"
                                         class="link-body-emphasis d-inline-flex text-decoration-none rounded">
                                         Data import
                                     </a>
@@ -137,9 +137,9 @@
             {% block content %}{% endblock %}
         </div>
     </main>
-    <script src="{{ url_for('static', filename='extensions/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', path='extensions/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script type="module" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-    <script type="module" src="{{ url_for('static', filename='js/fetch.js') }}"></script>
+    <script type="module" src="{{ url_for('static', path='js/fetch.js') }}"></script>
     {% block aditional_scripts %}{% endblock %}
 
 </body>

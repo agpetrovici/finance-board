@@ -1,16 +1,19 @@
-from app.backend.models.db import db
+from sqlalchemy import DateTime, Integer, String, func
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.backend.models.db import Base
 
 
-class StockAccount(db.Model):  # type: ignore[name-defined, misc]
+class StockAccount(Base):
     __tablename__ = "m_stock_account"
 
-    pk_stock_account = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(100))
-    description = db.Column(db.String(255))
+    pk_stock_account: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str | None] = mapped_column(String(100))
+    description: Mapped[str | None] = mapped_column(String(255))
 
     # Timestamps
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
-    updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+    created_at: Mapped[str | None] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[str | None] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
     def __repr__(self) -> str:
         return f"<StockAccount {self.name}>"

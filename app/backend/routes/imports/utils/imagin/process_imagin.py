@@ -4,6 +4,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
+from sqlalchemy.orm import Session
+
 from app.backend.models.e_transaction import FiatTransaction
 from app.backend.models.m_account import Account
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement
@@ -32,7 +34,7 @@ def get_new_movements_imagin(data: list[FiatTransaction], last_movement: Optiona
     return movements
 
 
-def process_imagin(file_buffer: io.BytesIO) -> list[FiatTransaction]:
+def process_imagin(session: Session, file_buffer: io.BytesIO) -> list[FiatTransaction]:
     file_buffer.seek(0)
     file_content = file_buffer.read().decode("utf-8")
     split_text = "Concepto;Fecha;Importe;Saldo disponible"
@@ -45,9 +47,9 @@ def process_imagin(file_buffer: io.BytesIO) -> list[FiatTransaction]:
     data_rows2 = list(reversed(data_rows2))
 
     iban = data_rows1[0]["IBAN"]
-    account = Account.query.filter_by(account_number=iban).first()
+    account = session.query(Account).filter_by(account_number=iban).first()
 
-    last_transaction = get_last_movement(account.account_pk)
+    last_transaction = get_last_movement(session, account.account_pk)
     transactions = [
         FiatTransaction(
             date=datetime.strptime(x["Fecha"], "%d/%m/%Y"),

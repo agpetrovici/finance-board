@@ -1,20 +1,24 @@
-from flask import Blueprint, render_template
+from pathlib import Path
 
-bp = Blueprint(
-    "dashboard",
-    __name__,
-    static_folder="static",
-    static_url_path="static",
-    template_folder="templates",
-    url_prefix="/dashboard",
+from fastapi import APIRouter, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+
+router = APIRouter(prefix="/dashboard", tags=["dashboard"])
+
+templates = Jinja2Templates(
+    directory=[
+        str(Path(__file__).parent / "templates"),
+        str(Path(__file__).parent.parent.parent / "templates"),
+    ]
 )
 
 
-@bp.route("/", methods=["GET"])
-def get_dashboard() -> str:
-    return render_template("dashboard/dashboard.html")
+@router.get("/", response_class=HTMLResponse)
+def get_dashboard(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "dashboard/dashboard.html")
 
 
-@bp.route("/test-dashboard", methods=["GET"])
-def test_get_dashboard() -> str:
-    return render_template("dashboard/test_dashboard.html")
+@router.get("/test-dashboard", response_class=HTMLResponse)
+def test_get_dashboard(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "dashboard/test_dashboard.html")

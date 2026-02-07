@@ -6,4 +6,3 @@ def polygon_to_bbox(polygon) -> list[list[float]] | None:
     if not polygon:
         return None
     return [[point.x, point.y] for point in polygon]
-

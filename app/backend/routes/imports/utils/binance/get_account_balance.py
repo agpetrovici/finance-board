@@ -2,12 +2,12 @@ import os
 from datetime import datetime
 
 from binance.client import Client
+from sqlalchemy.orm import Session
 
-from app.backend.models.db import db
 from app.backend.models.e_balance_crypto import BalanceCrypto
 
 
-def get_account_balance() -> None:
+def get_account_balance(session: Session) -> None:
     # Initialize the account
     client = Client(os.getenv("BINANCE_API_KEY"), os.getenv("BINANCE_SECRET_KEY"))
 
@@ -33,12 +33,12 @@ def get_account_balance() -> None:
 
     # For each balance record, update if exists or insert if not
     for balance in data:
-        existing = BalanceCrypto.query.filter_by(fk_account_crypto=balance.fk_account_crypto, timestamp=balance.timestamp, asset=balance.asset).first()
+        existing = session.query(BalanceCrypto).filter_by(fk_account_crypto=balance.fk_account_crypto, timestamp=balance.timestamp, asset=balance.asset).first()
 
         if existing:
             existing.free = balance.free
             existing.locked = balance.locked
         else:
-            db.session.add(balance)
+            session.add(balance)
 
-    db.session.commit()
+    session.commit()

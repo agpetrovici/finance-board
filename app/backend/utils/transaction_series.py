@@ -2,7 +2,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from dateutil.rrule import rrule, MONTHLY
 from decimal import Decimal
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set
+
+from sqlalchemy.orm import Session
 
 from app.backend.models.m_isin import Isin
 from app.backend.models.e_stock_transaction import StockTransaction
@@ -30,15 +32,15 @@ class Category:
     data: List[Subcategory]
 
 
-def get_transaction_series() -> ApexColumnChartData:
+def get_transaction_series(session: Session) -> ApexColumnChartData:
     series: List[Category] = []
     dates: List[str] = []
 
-    transactions = FiatTransaction.query.filter(FiatTransaction.date >= datetime.now().replace(year=datetime.now().year - 1)).all()
+    transactions = session.query(FiatTransaction).filter(FiatTransaction.date >= datetime.now().replace(year=datetime.now().year - 1)).all()
     if not transactions:
         return ApexColumnChartData(series, dates)
 
-    deposits = get_deposits()
+    deposits = get_deposits(session)
     for deposit in deposits:
         # TODOL Add category and subcategory in Deposit table
         transactions.append(FiatTransaction(date=deposit.date_start, name=deposit.name, category="Deposit", subcategory="Deposit", amount=deposit.amount))
@@ -103,7 +105,7 @@ def get_transaction_series() -> ApexColumnChartData:
     return ApexColumnChartData(series, dates_sorted)
 
 
-def test_get_transaction_series() -> Tuple[List[Category], List[str]]:
+def test_get_transaction_series() -> ApexColumnChartData:
     categories = [
         "2023-01-01",
         "2023-02-01",
@@ -231,11 +233,11 @@ def test_get_transaction_series() -> Tuple[List[Category], List[str]]:
     return ApexColumnChartData(series, categories)
 
 
-def get_stock_transaction_series() -> ApexColumnChartData:
+def get_stock_transaction_series(session: Session) -> ApexColumnChartData:
     series: List[Category] = []
     dates: List[str] = []
 
-    stock_transactions = StockTransaction.query.filter(StockTransaction.execution_date >= datetime.now().replace(year=datetime.now().year - 1)).all()
+    stock_transactions = session.query(StockTransaction).filter(StockTransaction.execution_date >= datetime.now().replace(year=datetime.now().year - 1)).all()
     if not stock_transactions:
         return ApexColumnChartData(series, dates)
 
@@ -275,7 +277,7 @@ def get_stock_transaction_series() -> ApexColumnChartData:
     for category in categories_sorted:
         subcategories_data: List[Subcategory] = []
         for subcategory in subcategories_sorted:
-            isin = Isin.query.filter(Isin.pk_isin == subcategory).first()
+            isin = session.get(Isin, subcategory)
             subcategory_data: List[DataPoint] = []
             for date in dates:
                 amount = Decimal("0")

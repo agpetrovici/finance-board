@@ -1,12 +1,17 @@
 import json
 from datetime import datetime
 from decimal import Decimal
+from os import getenv
 from pathlib import Path
+from typing import Any
 
-from flask import Blueprint, Response, current_app, jsonify, render_template, request
+from fastapi import APIRouter, Depends, Request, UploadFile
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from mindee import ClientV2
+from sqlalchemy.orm import Session
 
-from app.backend.models.db import db
+from app.backend.models.db import get_db
 from app.backend.models.e_stock_transaction import StockTransaction
 from app.backend.models.e_transaction import FiatTransaction
 from app.backend.models.m_account import Account
@@ -18,86 +23,87 @@ from app.backend.routes.imports.utils.csb43.get_csb43_movements import get_new_m
 from app.backend.routes.imports.utils.csb43.process_csb43 import parse_aes43
 from app.backend.routes.imports.utils.get_last_movement import get_last_movement
 from app.backend.routes.imports.utils.imagin.process_imagin import process_imagin
+from app.backend.routes.imports.utils.mindee_utils import polygon_to_bbox
 from app.backend.routes.imports.utils.revolut.process_revolut import get_new_movements_revolut
 from app.backend.routes.imports.utils.stock.stock import parse_stock_data
 from app.backend.utils.receipts.prediction import make_receipt_prediction
 from app.backend.utils.receipts.transaction import get_transaction
 from app.backend.utils.receipts.utils import save_image, save_result
-from app.backend.routes.imports.utils.mindee_utils import polygon_to_bbox
 
-bp = Blueprint(
-    "imports",
-    __name__,
-    static_folder="static",
-    template_folder="templates",
-    url_prefix="/imports",
+router = APIRouter(prefix="/imports", tags=["imports"])
+
+templates = Jinja2Templates(
+    directory=[
+        str(Path(__file__).parent / "templates"),
+        str(Path(__file__).parent.parent.parent / "templates"),
+    ]
 )
 
 
-@bp.route("/", methods=["GET"])
-def index() -> str:
-    return render_template("imports/tpl_import_index.html")
+@router.get("/", response_class=HTMLResponse)
+def imports_index(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "imports/tpl_import_index.html")
 
 
-@bp.route("/bbva", methods=["GET"])
-def import_bbva() -> str:
-    accounts = Account.query.all()
-    return render_template("imports/tpl_bbva.html", accounts=accounts)
+@router.get("/bbva", response_class=HTMLResponse)
+def import_bbva(request: Request, session: Session = Depends(get_db)) -> HTMLResponse:
+    accounts = session.query(Account).all()
+    return templates.TemplateResponse(request, "imports/tpl_bbva.html", {"accounts": accounts})
 
 
-@bp.route("/from-bbva", methods=["POST"])
-def import_bbva_process() -> tuple[Response, int]:
-    data = request.json
+@router.post("/from-bbva")
+async def import_bbva_process(request: Request, session: Session = Depends(get_db)) -> dict[str, Any]:
+    data = await request.json()
     if data is None:
-        return jsonify({"status": "error", "message": "No data received."}), 400
+        return {"status": "error", "message": "No data received."}
 
     account_pk = data.get("accountPk")
     text = data.get("text")
 
     if account_pk == "" or text == "":
-        return jsonify({"status": "error", "message": "No account pk or text provided."}), 400
+        return {"status": "error", "message": "No account pk or text provided."}
 
     try:
         account_pk = int(account_pk)
     except ValueError:
-        return jsonify({"status": "error", "message": "Invalid account pk."}), 400
+        return {"status": "error", "message": "Invalid account pk."}
 
     try:
         data = json.loads(text)
     except json.JSONDecodeError:
-        return jsonify({"status": "error", "message": "Invalid JSON format."}), 400
+        return {"status": "error", "message": "Invalid JSON format."}
 
     # First get the last movement in the database so I know from where to get the data from the dict
-    last_movement = get_last_movement(account_pk)
+    last_movement = get_last_movement(session, account_pk)
     if last_movement is None:
-        return jsonify({"status": "error", "message": "No last bank id."}), 400
+        return {"status": "error", "message": "No last bank id."}
 
     # Then get the new movements from the dict
     new_movements = get_new_movements_bbva(data, last_movement, account_pk)
     if not new_movements:
-        return jsonify({"status": "error", "message": "No new movements."}), 400
+        return {"status": "error", "message": "No new movements."}
 
     # Then save the new movements to the database
-    db.session.add_all(new_movements)
-    db.session.commit()
-    return jsonify({"status": "success", "message": f"Added {len(new_movements)} movements."}), 200
+    session.add_all(new_movements)
+    session.commit()
+    return {"status": "success", "message": f"Added {len(new_movements)} movements."}
 
 
-@bp.route("/bankinter")
-def import_bankinter() -> str:
-    return render_template("imports/tpl_bankinter.html")
+@router.get("/bankinter", response_class=HTMLResponse)
+def import_bankinter(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "imports/tpl_bankinter.html")
 
 
-@bp.route("/from-bankinter", methods=["POST"])
-def import_bankinter_process() -> tuple[Response, int]:
-    data = request.json
+@router.post("/from-bankinter")
+async def import_bankinter_process(request: Request, session: Session = Depends(get_db)) -> dict[str, Any]:
+    data = await request.json()
     if data is None:
-        return jsonify({"status": "error", "message": "No data received."}), 400
+        return {"status": "error", "message": "No data received."}
 
     file = data.get("file")
     # Get the file content as binary to create the dataframe
     if file is None:
-        return jsonify({"status": "error", "message": "No file provided."}), 400
+        return {"status": "error", "message": "No file provided."}
 
     try:
         import base64
@@ -106,34 +112,34 @@ def import_bankinter_process() -> tuple[Response, int]:
         file_bytes = base64.b64decode(file)
         file_buffer = io.BytesIO(file_bytes)
     except Exception as e:
-        return jsonify({"status": "error", "message": f"Could not process file: {str(e)}"}), 400
+        return {"status": "error", "message": f"Could not process file: {str(e)}"}
 
     # Then get the new movements from the excel file
-    new_movements = process_bankinter(file_buffer)
+    new_movements = process_bankinter(session, file_buffer)
     if not new_movements:
-        return jsonify({"status": "error", "message": "No new movements."}), 400
+        return {"status": "error", "message": "No new movements."}
 
     # Then save the new movements to the database
-    db.session.add_all(new_movements)
-    db.session.commit()
-    return jsonify({"status": "success", "message": f"Added {len(new_movements)} movements."}), 200
+    session.add_all(new_movements)
+    session.commit()
+    return {"status": "success", "message": f"Added {len(new_movements)} movements."}
 
 
-@bp.route("/imagin")
-def import_imagin() -> str:
-    return render_template("imports/tpl_imagin.html")
+@router.get("/imagin", response_class=HTMLResponse)
+def import_imagin(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "imports/tpl_imagin.html")
 
 
-@bp.route("/from-imagin", methods=["POST"])
-def import_imagin_process() -> tuple[Response, int]:
-    data = request.json
+@router.post("/from-imagin")
+async def import_imagin_process(request: Request, session: Session = Depends(get_db)) -> dict[str, Any]:
+    data = await request.json()
     if data is None:
-        return jsonify({"status": "error", "message": "No data received."}), 400
+        return {"status": "error", "message": "No data received."}
 
     file = data.get("file")
     # Get the file content as binary to create the dataframe
     if file is None:
-        return jsonify({"status": "error", "message": "No file provided."}), 400
+        return {"status": "error", "message": "No file provided."}
 
     try:
         import base64
@@ -142,146 +148,144 @@ def import_imagin_process() -> tuple[Response, int]:
         file_bytes = base64.b64decode(file)
         file_buffer = io.BytesIO(file_bytes)
     except Exception as e:
-        return jsonify({"status": "error", "message": f"Could not process file: {str(e)}"}), 400
+        return {"status": "error", "message": f"Could not process file: {str(e)}"}
 
     # Then get the new movements from the excel file
-    new_movements = process_imagin(file_buffer)
+    new_movements = process_imagin(session, file_buffer)
     if not new_movements:
-        return jsonify({"status": "error", "message": "No new movements."}), 400
+        return {"status": "error", "message": "No new movements."}
 
     # Then save the new movements to the database
-    db.session.add_all(new_movements)
-    db.session.commit()
-    return jsonify({"status": "success", "message": f"Added {len(new_movements)} movements."}), 200
+    session.add_all(new_movements)
+    session.commit()
+    return {"status": "success", "message": f"Added {len(new_movements)} movements."}
 
 
-@bp.route("/test-from-bbva", methods=["POST"])
-def test_import_bbva_process() -> tuple[Response, int]:
-    data = request.json
+@router.post("/test-from-bbva")
+async def test_import_bbva_process(request: Request, session: Session = Depends(get_db)) -> dict[str, Any]:
+    data = await request.json()
     if data is None:
-        return jsonify({"status": "error", "message": "No data received."}), 400
+        return {"status": "error", "message": "No data received."}
 
     account_pk = data.get("accountPk")
     text = data.get("text")
 
     if account_pk == "" or text == "":
-        return jsonify({"status": "error", "message": "No account pk or text provided."}), 400
+        return {"status": "error", "message": "No account pk or text provided."}
 
     try:
         account_pk = int(account_pk)
     except ValueError:
-        return jsonify({"status": "error", "message": "Invalid account pk."}), 400
+        return {"status": "error", "message": "Invalid account pk."}
 
     try:
         data = json.loads(text)
     except json.JSONDecodeError:
-        return jsonify({"status": "error", "message": "Invalid JSON format."}), 400
+        return {"status": "error", "message": "Invalid JSON format."}
 
     # First get the last movement in the database so I know from where to get the data from the dict
-    last_bank_id = get_last_movement(account_pk)
+    last_bank_id = get_last_movement(session, account_pk)
     if last_bank_id is None:
-        return jsonify({"status": "error", "message": "No last bank id."}), 400
+        return {"status": "error", "message": "No last bank id."}
 
     # Then get the new movements from the dict
     new_movements = get_new_movements_bbva(data, last_bank_id, account_pk)
     if not new_movements:
-        return jsonify({"status": "error", "message": "No new movements."}), 400
+        return {"status": "error", "message": "No new movements."}
 
-    return jsonify({"status": "success", "message": f"Added {len(new_movements)} movements."}), 200
-
-
-@bp.route("/norma43", methods=["GET"])
-def import_norma43() -> str:
-    return render_template("imports/tpl_norma43.html")
+    return {"status": "success", "message": f"Added {len(new_movements)} movements."}
 
 
-@bp.route("/from-norma43", methods=["POST"])
-def import_norma43_process() -> tuple[Response, int]:
+@router.get("/norma43", response_class=HTMLResponse)
+def import_norma43(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "imports/tpl_norma43.html")
+
+
+@router.post("/from-norma43")
+async def import_norma43_process(receipt: UploadFile, session: Session = Depends(get_db)) -> dict[str, Any]:
     try:
-        files = request.files
-        file = files["file"]
-        file_content: bytes = file.read()
+        file_content: bytes = await receipt.read()
         bank_statement = parse_aes43(file_content)
     except Exception:
-        return jsonify({"status": "error", "message": "Invalid file format."}), 400
+        return {"status": "error", "message": "Invalid file format."}
 
-    status, messages, new_movements = get_new_movements_from_BankStatement(bank_statement)
+    status, messages, new_movements = get_new_movements_from_BankStatement(session, bank_statement)
 
     if status:
         # Then save the new movements to the database
-        db.session.add_all(new_movements)
-        db.session.commit()
+        session.add_all(new_movements)
+        session.commit()
         messages.append(f"Added {len(new_movements)} movements in the db.")
-        return jsonify({"status": "success", "messages": messages}), 200
+        return {"status": "success", "messages": messages}
     else:
-        return jsonify({"status": "error", "messages": messages}), 400
+        return {"status": "error", "messages": messages}
 
 
-@bp.route("/binance")
-def import_binance() -> str:
-    return render_template("imports/tpl_binance.html")
+@router.get("/binance", response_class=HTMLResponse)
+def import_binance(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "imports/tpl_binance.html")
 
 
-@bp.route("/from-binance", methods=["POST"])
-def import_from_binance() -> tuple[Response, int]:
+@router.post("/from-binance")
+def import_from_binance(session: Session = Depends(get_db)) -> dict[str, Any]:
     try:
-        get_account_balance()
-        return jsonify({"status": "success", "message": "Account balance imported successfully."}), 200
+        get_account_balance(session)
+        return {"status": "success", "message": "Account balance imported successfully."}
     except Exception as e:
-        return jsonify({"status": "error", "message": f"Account balance import failed: {e}."}), 400
+        return {"status": "error", "message": f"Account balance import failed: {e}."}
 
 
-@bp.route("/revolut")
-def import_revolut() -> str:
-    return render_template("imports/tpl_revolut.html")
+@router.get("/revolut", response_class=HTMLResponse)
+def import_revolut(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "imports/tpl_revolut.html")
 
 
-@bp.route("/from-revolut", methods=["POST"])
-def import_from_revolut() -> tuple[Response, int]:
-    data = request.json
+@router.post("/from-revolut")
+async def import_from_revolut(request: Request, session: Session = Depends(get_db)) -> dict[str, Any]:
+    data = await request.json()
     if data is None:
-        return jsonify({"status": "error", "message": "No data received."}), 400
+        return {"status": "error", "message": "No data received."}
 
     text = data.get("text")
 
     if text == "":
-        return jsonify({"status": "error", "message": "No account pk or text provided."}), 400
+        return {"status": "error", "message": "No account pk or text provided."}
 
     try:
         data = json.loads(text)
     except json.JSONDecodeError:
-        return jsonify({"status": "error", "message": "Invalid JSON format."}), 400
+        return {"status": "error", "message": "Invalid JSON format."}
 
-    accounts = Account.query.all()
+    accounts = session.query(Account).all()
 
     # Then get the new movements from the dict
     new_movements = get_new_movements_revolut(data, accounts)
     if not new_movements:
-        return jsonify({"status": "error", "message": "No new movements."}), 400
+        return {"status": "error", "message": "No new movements."}
 
     # Then save the new movements to the database
-    db.session.add_all(new_movements)
-    db.session.commit()
-    return jsonify({"status": "success", "message": f"Added {len(new_movements)} movements."}), 200
+    session.add_all(new_movements)
+    session.commit()
+    return {"status": "success", "message": f"Added {len(new_movements)} movements."}
 
 
-@bp.route("/receipts")
-def import_receipts() -> str:
-    return render_template("imports/receipts/tpl_receipts.html")
+@router.get("/receipts", response_class=HTMLResponse)
+def import_receipts(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "imports/receipts/tpl_receipts.html")
 
 
-@bp.route("/get-receipt-data", methods=["POST"])
-def import_from_receipts() -> tuple[Response, int]:
-    file = request.files["receipt"]
-    data_input: bytes = file.read()
-    file_name = file.filename
+@router.post("/get-receipt-data")
+async def import_from_receipts(receipt: UploadFile, session: Session = Depends(get_db)) -> dict[str, Any]:
+    data_input: bytes = await receipt.read()
+    file_name = receipt.filename
 
     # Init a new client
-    mindee_client = ClientV2(api_key=current_app.config["MINDEE_API_KEY"])
-    model_id = current_app.config["MINDEE_MODEL_ID"]
+    mindee_api_key = getenv("MINDEE_API_KEY")
+    model_id = getenv("MINDEE_MODEL_ID")
+    mindee_client = ClientV2(api_key=mindee_api_key)
 
     # Save the receipt image
-    receipts_dir = Path(current_app.instance_path) / "receipts"
+    receipts_dir = Path(__file__).parent.parent.parent / "instance" / "receipts"
     receipts_dir.mkdir(parents=True, exist_ok=True)
 
     fields = make_receipt_prediction(model_id, mindee_client, data_input, file_name)
@@ -297,10 +301,10 @@ def import_from_receipts() -> tuple[Response, int]:
     if isinstance(_amount, float):
         _amount = -Decimal(str(_amount))
 
-    transaction = get_transaction(_date, _amount)
+    transaction = get_transaction(session, _date, _amount)
 
     # Return the image file encoded in base64 within a JSON response
-    data = {}
+    data: dict[str, Any] = {}
     if file_name and data_input:
         data["transaction_pk"] = transaction.transaction_pk
         data["transaction"] = {
@@ -311,8 +315,8 @@ def import_from_receipts() -> tuple[Response, int]:
             },
             "line_items": [
                 {
-                    "value": item.fields['description'].value,
-                    "bbox": polygon_to_bbox(item.fields['total_price'].locations[0].polygon),
+                    "value": item.fields["description"].value,
+                    "bbox": polygon_to_bbox(item.fields["total_price"].locations[0].polygon),
                 }
                 for item in fields["line_items"].object_items
             ],
@@ -327,29 +331,27 @@ def import_from_receipts() -> tuple[Response, int]:
             },
         }
 
-    return jsonify(
-        {
-            "status": "success",
-            "message": "Image processed successfully",
-            "data": data,
-        }
-    ), 200
+    return {
+        "status": "success",
+        "message": "Image processed successfully",
+        "data": data,
+    }
 
 
-@bp.route("/update-receipt", methods=["POST"])
-def update_receipt() -> tuple[Response, int]:
-    data = request.json
+@router.post("/update-receipt")
+async def update_receipt(request: Request, session: Session = Depends(get_db)) -> dict[str, Any]:
+    data = await request.json()
     if data is None:
-        return jsonify({"status": "error", "message": "No data received."}), 400
+        return {"status": "error", "message": "No data received."}
 
     transaction_pk = data.get("transaction_pk")
     if not transaction_pk:
-        return jsonify({"status": "error", "message": "No transaction pk provided."}), 400
+        return {"status": "error", "message": "No transaction pk provided."}
 
     # Find receipt in db
-    receipt: FiatTransaction = FiatTransaction.query.filter_by(transaction_pk=transaction_pk).first()
+    receipt: FiatTransaction = session.query(FiatTransaction).filter_by(transaction_pk=transaction_pk).first()
     if receipt is None:
-        return jsonify({"status": "error", "message": "Receipt not found."}), 400
+        return {"status": "error", "message": "Receipt not found."}
 
     # Clean the data to be updated
     _time: str = data.get("time")
@@ -367,48 +369,50 @@ def update_receipt() -> tuple[Response, int]:
     receipt.description = "\n".join([x for x in data.get("line_items") if x != ""])
 
     # Update the receipt
-    db.session.commit()
+    session.commit()
 
-    return jsonify({"status": "success", "message": "Receipt updated successfully."}), 200
-
-
-@bp.route("/stock")
-def import_stock() -> str:
-    accounts = StockAccount.query.all()
-    return render_template("imports/tpl_stock.html", accounts=accounts)
+    return {"status": "success", "message": "Receipt updated successfully."}
 
 
-@bp.route("/from-stock", methods=["POST"])
-def import_from_stock() -> tuple[Response, int]:
-    data = request.json
+@router.get("/stock", response_class=HTMLResponse)
+def import_stock(request: Request, session: Session = Depends(get_db)) -> HTMLResponse:
+    accounts = session.query(StockAccount).all()
+    return templates.TemplateResponse(request, "imports/tpl_stock.html", {"accounts": accounts})
+
+
+@router.post("/from-stock")
+async def import_from_stock(request: Request, session: Session = Depends(get_db)) -> dict[str, Any]:
+    data = await request.json()
     if data is None:
-        return jsonify({"status": "error", "message": "No data received."}), 400
+        return {"status": "error", "message": "No data received."}
 
     text = data.get("text")
     account_pk = data.get("accountPk")
     if not text or not account_pk:
-        return jsonify({"status": "error", "message": "No HTML content provided."}), 400
+        return {"status": "error", "message": "No HTML content provided."}
 
     # Get stock account
-    stock_account = StockAccount.query.filter_by(account_pk=account_pk).first()
+    stock_account = session.query(StockAccount).filter_by(account_pk=account_pk).first()
     if stock_account is None:
-        return jsonify({"status": "error", "message": "Stock account not found."}), 400
+        return {"status": "error", "message": "Stock account not found."}
     try:
-        new_stock_data = parse_stock_data(text, stock_account)
+        new_stock_data = parse_stock_data(session, text, stock_account)
         # Check if transactions already exist
         for transaction in new_stock_data:
-            existing = StockTransaction.query.filter_by(
-                fk_stock_account=transaction.fk_stock_account, order_id=transaction.order_id, execution_date=transaction.execution_date
-            ).first()
+            existing = (
+                session.query(StockTransaction)
+                .filter_by(fk_stock_account=transaction.fk_stock_account, order_id=transaction.order_id, execution_date=transaction.execution_date)
+                .first()
+            )
 
             if existing:
-                return jsonify({"status": "error", "message": f"Transaction with order ID {transaction.order_id} already exists"}), 400
+                return {"status": "error", "message": f"Transaction with order ID {transaction.order_id} already exists"}
 
         # Save to database
-        db.session.add_all(new_stock_data)
-        db.session.commit()
-        return jsonify({"status": "success", "message": f"Successfully imported {len(new_stock_data)} stock records."}), 200
+        session.add_all(new_stock_data)
+        session.commit()
+        return {"status": "success", "message": f"Successfully imported {len(new_stock_data)} stock records."}
 
     except Exception as e:
-        db.session.rollback()
-        return jsonify({"status": "error", "message": f"Error processing stock data: {str(e)}"}), 400
+        session.rollback()
+        return {"status": "error", "message": f"Error processing stock data: {str(e)}"}

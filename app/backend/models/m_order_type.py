@@ -1,12 +1,15 @@
-from app.backend.models.db import db
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.backend.models.db import Base
 
 
-class OrderType(db.Model):
+class OrderType(Base):
     __tablename__ = "m_order_type"
 
-    pk_order_type = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(100))
-    description = db.Column(db.String(255))
+    pk_order_type: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str | None] = mapped_column(String(100))
+    description: Mapped[str | None] = mapped_column(String(255))
 
     def __repr__(self) -> str:
         return f"<OrderType {self.name}>"

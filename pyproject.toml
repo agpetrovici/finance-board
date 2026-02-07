@@ -9,16 +9,22 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.13"
 python-dotenv = "^1.0.1"
-flask = "^3.1.1"
-flask-sqlalchemy = "^3.1.1"
-jinja2 = "^3.1"
-psycopg2-binary = "^2.9.10" # to use only in development
 csb43 = "^1.0.0"  # bank statement parser
 pyyaml = "^6.0.2"  #  used by csb43 for output generation
 tablib = "^3.7.0"  #  used by csb43 for output generation
 requests = "^2.32.3"
 python-binance = "^1.0.27"  # external dependency to connect to binance
 orjson = "^3.10.14"  # used by python-binance even if is not a direct dependency
+
+# web server
+fastapi = "^0.128.4"
+uvicorn = {extras = ["standard"], version = "^0.40.0"}
+python-multipart = "^0.0.20"
+jinja2 = "^3.1.5"
+
+# database
+sqlalchemy = "^2.0.46"
+psycopg2-binary = "^2.9.10" # to use only in development
 
 # xls files
 pandas = "^2.3.1"

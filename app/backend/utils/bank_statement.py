@@ -1,14 +1,13 @@
 from typing import Any, List, Sequence
 
-from flask_sqlalchemy.session import Session
-from sqlalchemy import func, select, Row
-from sqlalchemy.orm import scoped_session
+from sqlalchemy import Row, func, select
+from sqlalchemy.orm import Session
 
 from app.backend.models.e_deposit import Deposit
 from app.backend.models.e_transaction import FiatTransaction
 
 
-def get_monthly_transactions(session: scoped_session[Session]) -> Sequence[Row[Any]]:
+def get_monthly_transactions(session: Session) -> Sequence[Row[Any]]:
     # Subquery to get max transaction_pk per month
     subquery = (
         select(
@@ -35,7 +34,7 @@ def get_monthly_transactions(session: scoped_session[Session]) -> Sequence[Row[A
     return output
 
 
-def get_deposits() -> List[Deposit]:
-    deposits: List[Deposit] = Deposit.query.all()
+def get_deposits(session: Session) -> List[Deposit]:
+    deposits: List[Deposit] = session.query(Deposit).all()
 
     return deposits

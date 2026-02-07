@@ -2,8 +2,8 @@ from datetime import datetime
 from decimal import Decimal
 
 from bs4 import BeautifulSoup
+from sqlalchemy.orm import Session
 
-from app.backend.models.db import db
 from app.backend.models.e_stock_transaction import StockTransaction
 from app.backend.models.m_currency import Currency
 from app.backend.models.m_execution_venue import ExecutionVenue
@@ -38,7 +38,7 @@ ORDER_TYPE_MAP = {
 }
 
 
-def parse_stock_data(text: str, stock_account: StockAccount) -> list[StockTransaction]:
+def parse_stock_data(session: Session, text: str, stock_account: StockAccount) -> list[StockTransaction]:
     # Extract data from table
     soup = BeautifulSoup(text, "html.parser")
     table = soup.find("table", {"width": "580"})
@@ -116,28 +116,28 @@ def parse_stock_data(text: str, stock_account: StockAccount) -> list[StockTransa
 
     for currency_code in currencies_to_check:
         if currency_code:  # Skip empty strings
-            currency = Currency.query.get(currency_code)
+            currency = session.get(Currency, currency_code)
             if not currency:
                 currency = Currency(code=currency_code, name=currency_code)
-                db.session.add(currency)
+                session.add(currency)
 
     fk_isin = data.get("isin", "")
     fk_reference_exchange = data.get("bolsa de referencia", "")
     fk_execution_venue = data.get("centro de ejecución", "")
     # Check if the values exists, if not create it
-    isin = Isin.query.get(fk_isin)
+    isin = session.get(Isin, fk_isin)
     if not isin:
         isin = Isin(pk_isin=fk_isin, name=fk_isin)
-        db.session.add(isin)
-    execution_venue = ExecutionVenue.query.get(fk_execution_venue)
+        session.add(isin)
+    execution_venue = session.get(ExecutionVenue, fk_execution_venue)
     if not execution_venue:
         execution_venue = ExecutionVenue(pk_execution_venue=fk_execution_venue, name=fk_execution_venue)
-        db.session.add(execution_venue)
-    reference_exchange = ReferenceExchange.query.get(fk_reference_exchange)
+        session.add(execution_venue)
+    reference_exchange = session.get(ReferenceExchange, fk_reference_exchange)
     if not reference_exchange:
         reference_exchange = ReferenceExchange(pk_reference_exchange=fk_reference_exchange, name=fk_reference_exchange)
-        db.session.add(reference_exchange)
-    db.session.commit()
+        session.add(reference_exchange)
+    session.commit()
 
     # Create transaction
     transaction = StockTransaction(

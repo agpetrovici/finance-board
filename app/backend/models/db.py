@@ -1,5 +1,20 @@
 from os import getenv
+from typing import Generator
 
-from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-db = SQLAlchemy(engine_options={"url": getenv("SQLALCHEMY_DATABASE_URI")})
+engine = create_engine(getenv("SQLALCHEMY_DATABASE_URI", ""))
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+def get_db() -> Generator[Session, None, None]:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

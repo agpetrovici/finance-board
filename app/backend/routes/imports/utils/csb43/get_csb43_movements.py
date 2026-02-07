@@ -1,5 +1,6 @@
-from decimal import Decimal
 from typing import List, Optional, Tuple
+
+from sqlalchemy.orm import Session
 
 from app.backend.models.m_account import Account
 from app.backend.models.e_transaction import FiatTransaction
@@ -40,18 +41,22 @@ def get_new_movements(data: List[TransactionCsb43], last_transaction: Optional[F
     return movements
 
 
-def get_new_movements_from_BankStatement(data: BankStatement) -> Tuple[bool, List[str], List[FiatTransaction]]:
+def get_new_movements_from_BankStatement(session: Session, data: BankStatement) -> Tuple[bool, List[str], List[FiatTransaction]]:
     movements: List[FiatTransaction] = []
     status: bool = True
     messages: List[str] = []
 
     for account in data.accounts:
         # Given an account from the csb43 file, find the corresponding account in the database
-        account_db: Account = Account.query.filter_by(
-            bank_code=account.bank_code,
-            branch_code=account.branch_code,
-            account_number=account.account_number,
-        ).first()
+        account_db: Account = (
+            session.query(Account)
+            .filter_by(
+                bank_code=account.bank_code,
+                branch_code=account.branch_code,
+                account_number=account.account_number,
+            )
+            .first()
+        )
 
         if account_db is None:
             status = False
@@ -59,7 +64,7 @@ def get_new_movements_from_BankStatement(data: BankStatement) -> Tuple[bool, Lis
             continue
 
         # After finding the account, find the last transaction saved in the database
-        last_movement = get_last_movement(account_db.account_pk)
+        last_movement = get_last_movement(session, account_db.account_pk)
 
         # After finding the last movement, then make a list of new Transactions
         movements.extend(get_new_movements(account.transactions, last_movement, account_db.account_pk))
