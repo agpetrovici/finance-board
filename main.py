@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from app.backend.flask_app import create_app  # noqa: E402
+from app.backend.app import create_app  # noqa: E402
 from app.backend.config import Config  # noqa: E402
 
 sys.path.append(str(Path(__file__).parent.parent))
