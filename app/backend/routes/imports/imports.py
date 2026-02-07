@@ -392,7 +392,7 @@ async def import_from_stock(request: Request, session: Session = Depends(get_db)
         return {"status": "error", "message": "No HTML content provided."}
 
     # Get stock account
-    stock_account = session.query(StockAccount).filter_by(account_pk=account_pk).first()
+    stock_account = session.query(StockAccount).filter_by(pk_stock_account=account_pk).first()
     if stock_account is None:
         return {"status": "error", "message": "Stock account not found."}
     try:
