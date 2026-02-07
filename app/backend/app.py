@@ -10,6 +10,7 @@ from app.backend.models.db import Base, engine
 from app.backend.routes.api.api import router as router_api
 from app.backend.routes.dashboard.dashboard import router as router_dashboard
 from app.backend.routes.imports.imports import router as router_imports
+from app.backend.routes.stocks.stocks import router as router_stocks
 
 
 @asynccontextmanager
@@ -60,6 +61,7 @@ def create_app() -> FastAPI:
     app.include_router(router_api)
     app.include_router(router_dashboard)
     app.include_router(router_imports)
+    app.include_router(router_stocks)
 
     @app.get("/")
     def index() -> RedirectResponse:

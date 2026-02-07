@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Stocks{% endblock %}
+
+{% block title_inline %}Stocks{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div id="chart"></div>
+</div>
+{% endblock %}
+
+{% block aditional_styles %}
+{% endblock %}
+
+{% block aditional_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", initStocksChart);
+    var seriesData = {{ series | safe }};
+
+    function initStocksChart() {
+
+        var options = {
+            series: seriesData,
+            chart: {
+                type: 'area',
+                stacked: false,
+                height: 350,
+                zoom: {
+                    type: 'x',
+                    enabled: true,
+                    autoScaleYaxis: true
+                },
+                toolbar: {
+                    autoSelected: 'zoom'
+                }
+            },
+            dataLabels: {
+                enabled: false
+            },
+            markers: {
+                size: 0,
+            },
+            title: {
+                text: 'Portfolio Value',
+                align: 'left'
+            },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    inverseColors: false,
+                    opacityFrom: 0.5,
+                    opacityTo: 0,
+                    stops: [0, 90, 100]
+                },
+            },
+            yaxis: {
+                labels: {
+                    formatter: function (val) {
+                        return val.toFixed(2);
+                    },
+                },
+                title: {
+                    text: 'Value'
+                },
+            },
+            xaxis: {
+                type: 'datetime',
+            },
+            tooltip: {
+                shared: false,
+                y: {
+                    formatter: function (val) {
+                        return val.toFixed(2);
+                    }
+                }
+            }
+        };
+
+        var chart = new ApexCharts(document.querySelector("#chart"), options);
+        chart.render();
+    }
+</script>
+{% endblock %}

@@ -13,6 +13,7 @@ class StockTransaction(Base):
     order_id: Mapped[str] = mapped_column(String(100), nullable=False)  # id stored by the broker
     execution_date: Mapped[str] = mapped_column(DateTime, nullable=False)
     fk_isin: Mapped[str] = mapped_column(String(12), ForeignKey("m_isin.pk_isin"), nullable=False)
+    fk_symbol: Mapped[str] = mapped_column(String(10), ForeignKey("e_stock_symbol.pk_symbol"), nullable=False)
     fk_order_type: Mapped[int] = mapped_column(Integer, ForeignKey("m_order_type.pk_order_type"), nullable=False)
     fk_order_class: Mapped[int] = mapped_column(Integer, ForeignKey("m_order_class.pk_order_class"), nullable=False)
     fk_reference_exchange: Mapped[str | None] = mapped_column(String(3), ForeignKey("m_reference_exchange.pk_reference_exchange"), nullable=True)
