@@ -15,6 +15,8 @@ from app.backend.routes.imports.imports import router as router_imports
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Import all models so Base.metadata knows about them
+    from app.backend.models.stock.e_stock_price import StockPriceDaily  # noqa: F401
+    from app.backend.models.stock.e_stock_symbol import StockSymbol  # noqa: F401
     from app.backend.models.e_balance_crypto import BalanceCrypto  # noqa: F401
     from app.backend.models.e_deposit import Deposit  # noqa: F401
     from app.backend.models.e_invoice import Invoice  # noqa: F401

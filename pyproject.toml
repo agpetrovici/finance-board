@@ -35,13 +35,16 @@ openpyxl = "^3.1.5"
 mindee = "^4.31.0"
 bs4 = "^0.0.2"
 
+# Stock data API
+twelvedata = "^1.2.28"
+
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.0.2"
 pytest-cov = "^7.0.0"
 mypy = "^1.14.1"
 types-python-dateutil = "^2.9.0.20241206"
 types-requests = "^2.32.0.20241016"
-ruff = "^0.8.4"
+ruff = "^0.15.0"
 
 [build-system]
 requires = ["poetry-core"]
