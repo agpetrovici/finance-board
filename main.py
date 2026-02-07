@@ -17,7 +17,7 @@ app = create_app()
 
 if __name__ == "__main__":
     port_raw = os.getenv("FASTAPI_PORT")
-    host = os.getenv("FASTAPI_HOST")
+    host = os.getenv("FASTAPI_HOST", "localhost")
     port = int(port_raw) if port_raw else 8000
     ssl_certfile = "cert.pem" if Path("cert.pem").exists() else None
     ssl_keyfile = "key.pem" if Path("key.pem").exists() else None
