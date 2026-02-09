@@ -18,4 +18,4 @@ class StockPriceDaily(Base):
     volume: Mapped[int] = mapped_column(Integer, nullable=False)
 
     def __repr__(self) -> str:
-        return f"<StockPriceDaily {self.fk_isin} {self.datetime}>"
+        return f"<StockPriceDaily {self.fk_symbol} {self.date} {self.close}>"
