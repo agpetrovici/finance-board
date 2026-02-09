@@ -1,5 +1,7 @@
 # Finance Board
 
+![Coverage](https://img.shields.io/badge/coverage-66%25-orange)
+
 A simple finance board for personal use.
 
 Currently a work in progress.
@@ -28,3 +30,9 @@ Displays the transactions per month with details over tooltips.
 4. Define the environment variables in `.env` defined in `.env.example`.
 5. Generate a self signed `cert.pem` and `key.pem` with `openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 365`
 6. Run the Flask backend `main.py`.
+
+## Coverage
+
+```shell
+pytest --cov=. --cov-report=html tests/
+```
