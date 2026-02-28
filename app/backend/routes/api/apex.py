@@ -10,6 +10,16 @@ class ApexLineChartData:
         return {"labels": self.labels, "datasets": self.datasets}
 
 
+class ApexAreaChartData:
+    """ApexCharts series format: ``[{name, data: [[x, y], ...]}, ...]``."""
+
+    def __init__(self, series: List[Dict[str, Any]]):
+        self.series = series
+
+    def to_dict(self) -> dict:
+        return {"series": self.series}
+
+
 class ApexColumnChartData:
     def __init__(self, series: List[str], categories: List[Dict[str, Any]]):
         self.series = series

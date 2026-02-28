@@ -1,31 +1,62 @@
-export async function graphLine(data) {
-  // Get the canvas element
-  const ctx = document.querySelector("#finance-chart").getContext("2d");
-
-  // Chart configuration
-  const config = {
-    type: "line",
-    data: data,
-    options: {
-      responsive: true,
-      plugins: {
-        title: {
-          display: true,
-          text: "Monthly Financial Overview",
+export function graphLine(seriesData, selector = "#finance-chart") {
+  var options = {
+    series: seriesData,
+    chart: {
+      type: "area",
+      stacked: false,
+      height: 350,
+      zoom: {
+        type: "x",
+        enabled: true,
+        autoScaleYaxis: true,
+      },
+      toolbar: {
+        autoSelected: "zoom",
+      },
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    markers: {
+      size: 0,
+    },
+    title: {
+      text: "Monthly Financial Overview",
+      align: "left",
+    },
+    fill: {
+      type: "gradient",
+      gradient: {
+        shadeIntensity: 1,
+        inverseColors: false,
+        opacityFrom: 0.5,
+        opacityTo: 0,
+        stops: [0, 90, 100],
+      },
+    },
+    yaxis: {
+      labels: {
+        formatter: function (val) {
+          return val.toFixed(2);
         },
       },
-      scales: {
-        y: {
-          beginAtZero: true,
-          title: {
-            display: true,
-            text: "Amount ($)",
-          },
+      title: {
+        text: "Amount ($)",
+      },
+    },
+    xaxis: {
+      type: "datetime",
+    },
+    tooltip: {
+      shared: false,
+      y: {
+        formatter: function (val) {
+          return val.toFixed(2);
         },
       },
     },
   };
 
-  // Create the chart
-  new Chart(ctx, config);
+  var chart = new ApexCharts(document.querySelector(selector), options);
+  chart.render();
 }
