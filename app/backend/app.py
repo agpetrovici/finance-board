@@ -21,8 +21,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     from app.backend.models.e_balance_crypto import BalanceCrypto  # noqa: F401
     from app.backend.models.e_deposit import Deposit  # noqa: F401
     from app.backend.models.e_invoice import Invoice  # noqa: F401
-    from app.backend.models.e_real_estate_land_plot import RealEstateLandPlot  # noqa: F401
-    from app.backend.models.e_real_estate_land_plot_comparable import RealEstateLandPlotComparable  # noqa: F401
     from app.backend.models.e_stock_portfolio import StockPortfolio  # noqa: F401
     from app.backend.models.e_stock_transaction import StockTransaction  # noqa: F401
     from app.backend.models.e_transaction import FiatTransaction  # noqa: F401
@@ -36,6 +34,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     from app.backend.models.m_order_type import OrderType  # noqa: F401
     from app.backend.models.m_reference_exchange import ReferenceExchange  # noqa: F401
     from app.backend.models.m_stock_account import StockAccount  # noqa: F401
+    from app.backend.models.real_estate.e_real_estate_land_plot import RealEstateLandPlot  # noqa: F401
+    from app.backend.models.real_estate.e_real_estate_land_plot_comparable import RealEstateLandPlotComparable  # noqa: F401
 
     # Create all tables
     Base.metadata.create_all(bind=engine)
