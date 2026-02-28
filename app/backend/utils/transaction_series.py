@@ -9,7 +9,12 @@ from sqlalchemy.orm import Session
 from app.backend.models.m_isin import Isin
 from app.backend.models.e_stock_transaction import StockTransaction
 from app.backend.models.e_transaction import FiatTransaction
-from app.backend.routes.api.apex import ApexColumnChartData
+from app.backend.routes.api.apex import (
+    ApexColumnChartData,
+    Category as IncExpCategory,
+    IncomeAndExpensesStatement,
+    Subcategory as IncExpSubcategory,
+)
 from app.backend.utils.bank_statement import get_deposits
 
 
@@ -295,3 +300,54 @@ def get_stock_transaction_series(session: Session) -> ApexColumnChartData:
         series.append(Category(category=category, data=subcategories_data))
 
     return ApexColumnChartData(series, dates)
+
+
+def get_income_expenses_statements(session: Session) -> List[IncomeAndExpensesStatement]:
+    """Build per-month income / expense statements from fiat transactions.
+
+    A category is classified as *income* when the sum of its subcategory
+    amounts for that month is positive, and *expense* otherwise.
+    """
+    transactions = (
+        session.query(FiatTransaction)
+        .filter(FiatTransaction.date >= datetime.now().replace(year=datetime.now().year - 1))
+        .all()
+    )
+    if not transactions:
+        return []
+
+    monthly_data: Dict[str, Dict[str, Dict[str, float]]] = {}
+
+    for t in transactions:
+        month_str = t.date.replace(day=1).strftime("%Y-%m-%d")
+        category = t.category or "Uncategorized"
+        subcategory = t.subcategory or "Uncategorized"
+
+        monthly_data.setdefault(month_str, {}).setdefault(category, {}).setdefault(subcategory, 0.0)
+        monthly_data[month_str][category][subcategory] += float(t.amount)
+
+    statements: List[IncomeAndExpensesStatement] = []
+    for month_str in sorted(monthly_data.keys()):
+        incomes: List[IncExpCategory] = []
+        expenses: List[IncExpCategory] = []
+
+        for cat_name, subcats in sorted(monthly_data[month_str].items()):
+            cat_total = sum(subcats.values())
+            subcategories = [
+                IncExpSubcategory(name=sub_name, amount=round(amount, 2))
+                for sub_name, amount in sorted(subcats.items())
+            ]
+            cat = IncExpCategory(name=cat_name, subcategories=subcategories)
+
+            if cat_total > 0:
+                incomes.append(cat)
+            else:
+                expenses.append(cat)
+
+        statements.append(IncomeAndExpensesStatement(
+            month=datetime.strptime(month_str, "%Y-%m-%d").date(),
+            incomes=incomes,
+            expenses=expenses,
+        ))
+
+    return statements
