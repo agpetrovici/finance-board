@@ -118,4 +118,12 @@ async function initMap() {
   if (hasMarkers) {
     map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
   }
+
+  loadComparablesTable();
+}
+
+async function loadComparablesTable() {
+  var response = await fetch("/real-estate/api/comparables-table");
+  var html = await response.text();
+  document.getElementById("comparables-table").innerHTML = html;
 }
