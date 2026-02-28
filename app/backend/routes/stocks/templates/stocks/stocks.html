@@ -2,20 +2,110 @@
 
 {% block title %}Stocks{% endblock %}
 
-{% block title_inline %}Stocks{% endblock %}
+{% block title_inline %}Portfolio Performance{% endblock %}
 
 {% block content %}
 <div class="container-fluid mt-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Portfolio Value</h5>
-                    <div id="chart"></div>
+
+    <!-- KPI Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h6 class="card-subtitle text-muted">Total Invested</h6>
+                    <h4 id="kpi-invested" class="card-title mt-2">–</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h6 class="card-subtitle text-muted">Market Value</h6>
+                    <h4 id="kpi-market-value" class="card-title mt-2">–</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h6 class="card-subtitle text-muted">Total Return</h6>
+                    <h4 id="kpi-total-return" class="card-title mt-2">–</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h6 class="card-subtitle text-muted">Return %</h6>
+                    <h4 id="kpi-return-pct" class="card-title mt-2">–</h4>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Row 1: Value vs Cost Basis + Allocation Donut -->
+    <div class="row">
+        <div class="col-8">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Portfolio Value vs Cost Basis</h5>
+                    <div id="chart-value-vs-cost"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Portfolio Allocation</h5>
+                    <div id="chart-allocation"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: Cumulative P&L + Per-Stock Return -->
+    <div class="row mt-4">
+        <div class="col-8">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Cumulative P&amp;L</h5>
+                    <div id="chart-pnl"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Monthly Returns</h5>
+                    <div id="chart-monthly-returns"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 3: Stock Detail + Monthly Returns -->
+    <div class="row mt-4">
+        <div class="col-8">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="card-title mb-0">Stock Detail</h5>
+                        <select id="stock-select" class="form-select" style="max-width: 200px;"></select>
+                    </div>
+                    <div id="chart-stock-detail"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Per-Stock Return %</h5>
+                    <div id="chart-stock-performance"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 {% endblock %}
 
@@ -24,72 +114,5 @@
 
 {% block aditional_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", initStocksChart);
-    var seriesData = {{ series | safe }};
-
-    function initStocksChart() {
-
-        var options = {
-            series: seriesData,
-            chart: {
-                type: 'area',
-                stacked: false,
-                height: 350,
-                zoom: {
-                    type: 'x',
-                    enabled: true,
-                    autoScaleYaxis: true
-                },
-                toolbar: {
-                    autoSelected: 'zoom'
-                }
-            },
-            dataLabels: {
-                enabled: false
-            },
-            markers: {
-                size: 0,
-            },
-            title: {
-                text: 'Portfolio Value',
-                align: 'left'
-            },
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shadeIntensity: 1,
-                    inverseColors: false,
-                    opacityFrom: 0.5,
-                    opacityTo: 0,
-                    stops: [0, 90, 100]
-                },
-            },
-            yaxis: {
-                labels: {
-                    formatter: function (val) {
-                        return val.toFixed(2);
-                    },
-                },
-                title: {
-                    text: 'Value'
-                },
-            },
-            xaxis: {
-                type: 'datetime',
-            },
-            tooltip: {
-                shared: false,
-                y: {
-                    formatter: function (val) {
-                        return val.toFixed(2);
-                    }
-                }
-            }
-        };
-
-        var chart = new ApexCharts(document.querySelector("#chart"), options);
-        chart.render();
-    }
-</script>
+<script src="{{ url_for('stocks_static', path='stocks/js/portfolio-charts.js') }}"></script>
 {% endblock %}

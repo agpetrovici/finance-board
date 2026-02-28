@@ -59,6 +59,10 @@ def create_app() -> FastAPI:
     if imports_static.exists():
         app.mount("/imports/static", StaticFiles(directory=str(imports_static)), name="imports_static")
 
+    stocks_static = Path(__file__).parent / "routes" / "stocks" / "static"
+    if stocks_static.exists():
+        app.mount("/stocks/static", StaticFiles(directory=str(stocks_static)), name="stocks_static")
+
     real_estate_static = Path(__file__).parent / "routes" / "real_estate" / "static"
     if real_estate_static.exists():
         app.mount("/real-estate/static", StaticFiles(directory=str(real_estate_static)), name="real_estate_static")
