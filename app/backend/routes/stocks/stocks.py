@@ -41,7 +41,8 @@ def _portfolio_to_series(portfolio: Portfolio) -> list[dict]:
 @router.get("/", response_class=HTMLResponse)
 def stocks_index(request: Request, session: Session = Depends(get_db)) -> HTMLResponse:
     stock_transactions = session.query(StockTransaction).all()
-    stock_prices = session.query(StockPriceDaily).order_by(StockPriceDaily.date.asc()).all()
+    used_symbols = list(set(x.fk_symbol for x in stock_transactions))
+    stock_prices = session.query(StockPriceDaily).filter(StockPriceDaily.fk_symbol.in_(used_symbols)).order_by(StockPriceDaily.date.asc()).all()
 
     portfolio: Portfolio = calculate_portfolio(stock_transactions, stock_prices)
     series = _portfolio_to_series(portfolio)
