@@ -105,13 +105,22 @@ async function initMap() {
     hasMarkers = true;
   });
 
+  var parcelsLayer = L.geoJSON(null, {
+      style: { color: "#e67e22", weight: 2, fillOpacity: 0.15 },
+      onEachFeature: function (feature, layer) {
+          layer.bindPopup("<b>Ref:</b> " + feature.properties.refcat);
+      },
+  });
+
   propertiesLayer.addTo(map);
   comparablesLayer.addTo(map);
+  parcelsLayer.addTo(map);
 
   L.control
     .layers(null, {
-      Properties: propertiesLayer,
-      Comparables: comparablesLayer,
+      "Properties": propertiesLayer,
+      "Comparables": comparablesLayer,
+      "Cadastral Parcels": parcelsLayer,
     })
     .addTo(map);
 
@@ -120,10 +129,17 @@ async function initMap() {
   }
 
   loadComparablesTable();
+  loadCadastralParcels(parcelsLayer);
 }
 
 async function loadComparablesTable() {
-  var response = await fetch("/real-estate/api/comparables-table");
-  var html = await response.text();
-  document.getElementById("comparables-table").innerHTML = html;
+    var response = await fetch("/real-estate/api/comparables-table");
+    var html = await response.text();
+    document.getElementById("comparables-table").innerHTML = html;
+}
+
+async function loadCadastralParcels(parcelsLayer) {
+    var response = await fetch("/real-estate/api/cadastral-parcels");
+    var geojson = await response.json();
+    parcelsLayer.addData(geojson);
 }

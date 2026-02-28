@@ -1,6 +1,9 @@
+import logging
 import math
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import requests as http_client
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -169,3 +172,67 @@ def real_estate_comparables_table(request: Request, session: Session = Depends(g
         "real_estate/_comparables_table.html",
         {"rows": rows, "market_prices": market_prices},
     )
+
+
+CATASTRO_WFS_URL = "https://ovc.catastro.meh.es/INSPIRE/wfsCP.aspx"
+GML_NS = {"gml": "http://www.opengis.net/gml/3.2"}
+
+logger = logging.getLogger(__name__)
+
+
+def _fetch_parcel_polygon(refcat_14: str) -> dict | None:
+    """Fetch a cadastral parcel polygon from the Catastro INSPIRE WFS.
+
+    Returns a GeoJSON Feature dict or None if the parcel is not found.
+    Coordinates are requested in EPSG:4326 (WGS84).
+    GML returns them as lat/lng; GeoJSON expects [lng, lat].
+    """
+    try:
+        resp = http_client.get(
+            CATASTRO_WFS_URL,
+            params={
+                "service": "wfs",
+                "version": "2",
+                "request": "getfeature",
+                "STOREDQUERIE_ID": "GetParcel",
+                "refcat": refcat_14,
+                "srsname": "EPSG::4326",
+            },
+            timeout=10,
+        )
+        resp.raise_for_status()
+    except http_client.RequestException:
+        logger.warning("Failed to fetch cadastral parcel %s", refcat_14)
+        return None
+
+    root = ET.fromstring(resp.content)
+    pos_list_el = root.find(".//gml:posList", GML_NS)
+    if pos_list_el is None or not pos_list_el.text:
+        return None
+
+    coords_flat = list(map(float, pos_list_el.text.strip().split()))
+    ring = [[coords_flat[i + 1], coords_flat[i]] for i in range(0, len(coords_flat), 2)]
+
+    return {
+        "type": "Feature",
+        "properties": {"refcat": refcat_14},
+        "geometry": {"type": "Polygon", "coordinates": [ring]},
+    }
+
+
+@router.get("/api/cadastral-parcels", response_class=JSONResponse)
+def real_estate_cadastral_parcels(session: Session = Depends(get_db)) -> JSONResponse:
+    geolocated = session.query(RealEstateLandPlotComparableGeolocated).all()
+
+    seen: set[str] = set()
+    for g in geolocated:
+        refcat_14 = g.pk_reference20[:14]
+        seen.add(refcat_14)
+
+    features: list[dict] = []
+    for refcat in seen:
+        feature = _fetch_parcel_polygon(refcat)
+        if feature:
+            features.append(feature)
+
+    return JSONResponse(content={"type": "FeatureCollection", "features": features})
