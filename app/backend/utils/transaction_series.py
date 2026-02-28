@@ -73,6 +73,7 @@ def get_transaction_series(session: Session) -> ApexColumnChartData:
     transaction_dates_sorted: List[datetime] = sorted(list(transaction_dates))
     min_date = min(transaction_dates_sorted)
     max_date = max(transaction_dates_sorted)
+    # dates to plot
     dates_sorted: List[str] = [date.strftime("%Y-%m-%d") for date in rrule(MONTHLY, dtstart=min_date, until=max_date)]
 
     # Create series grouped by category
@@ -81,8 +82,8 @@ def get_transaction_series(session: Session) -> ApexColumnChartData:
         for subcategory in subcategories_sorted:
             subcategory_data: List[DataPoint] = []
             for date in dates_sorted:
-                # Sum amounts for each subcategory
-                for _subcategory, txns in transaction_groups[date].get(category, {}).items():
+                # Sum amounts for each subcategory (use .get() since not all dates have transactions)
+                for _subcategory, txns in transaction_groups.get(date, {}).get(category, {}).items():
                     if _subcategory != subcategory:
                         # subcategory_data.append(DataPoint(x=date, y=Decimal("0"), tooltip=[""]))
                         continue
