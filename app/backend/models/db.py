@@ -34,6 +34,35 @@ class PointType(UserDefinedType):
         return process
 
 
+class PolygonType(UserDefinedType):
+    cache_ok = True
+
+    def get_col_spec(self):
+        return "POLYGON"
+
+    def bind_processor(self, dialect):
+        def process(value):
+            if value is None:
+                return None
+            if isinstance(value, list):
+                points = ",".join(f"({x},{y})" for x, y in value)
+                return f"({points})"
+            return value
+        return process
+
+    def result_processor(self, dialect, coltype):
+        def process(value):
+            if value is None:
+                return None
+            inner = value.strip("()")
+            points = []
+            for pair in inner.split("),("):
+                x, y = pair.strip("()").split(",")
+                points.append([float(x), float(y)])
+            return points
+        return process
+
+
 class Base(DeclarativeBase):
     pass
 
