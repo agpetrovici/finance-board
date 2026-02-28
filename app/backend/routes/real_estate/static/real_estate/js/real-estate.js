@@ -46,9 +46,18 @@ async function initMap() {
   });
 
   var comparableLookup = buildComparableLookup(comparables);
+  var priceRange = computePriceRange(comparableLookup);
 
   var parcelsLayer = L.geoJSON(null, {
-    style: { color: "#e67e22", weight: 2, fillOpacity: 0.15 },
+    style: function (feature) {
+      var refcat = feature.properties.refcat;
+      var avg = getAvgPricePerM2(comparableLookup[refcat] || []);
+      return {
+        color: priceToColor(avg, priceRange.min, priceRange.max),
+        weight: 2,
+        fillOpacity: 0.35,
+      };
+    },
     onEachFeature: function (feature, layer) {
       var refcat = feature.properties.refcat;
       var items = comparableLookup[refcat] || [];
@@ -125,6 +134,40 @@ function buildComparableLookup(comparables) {
     lookup[refcat14].push(c);
   });
   return lookup;
+}
+
+function getAvgPricePerM2(items) {
+  var values = items
+    .map(function (c) {
+      return c.avg_price_per_m2;
+    })
+    .filter(function (v) {
+      return v != null;
+    });
+  if (values.length === 0) return null;
+  return (
+    values.reduce(function (a, b) {
+      return a + b;
+    }, 0) / values.length
+  );
+}
+
+function computePriceRange(lookup) {
+  var all = [];
+  Object.keys(lookup).forEach(function (key) {
+    var avg = getAvgPricePerM2(lookup[key]);
+    if (avg != null) all.push(avg);
+  });
+  if (all.length === 0) return { min: 0, max: 1 };
+  return { min: Math.min.apply(null, all), max: Math.max.apply(null, all) };
+}
+
+function priceToColor(value, min, max) {
+  if (value == null) return "#999999";
+  var t = max > min ? (value - min) / (max - min) : 0.5;
+  var r = Math.round(55 + 200 * t);
+  var g = Math.round(55 + 200 * (1 - t));
+  return "rgb(" + r + "," + g + ",55)";
 }
 
 async function loadComparablesTable() {
