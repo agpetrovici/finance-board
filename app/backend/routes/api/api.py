@@ -38,7 +38,7 @@ def get_stock_transactions(session: Session = Depends(get_db)) -> dict[str, Any]
 def get_financial_series(session: Session = Depends(get_db)) -> dict[str, Any]:
     """Return ApexCharts-compatible series for the financial overview chart.
 
-    Each account becomes a series with ``[timestamp_ms, balance]`` data points.
+    Each account becomes a series with ``[date, balance]`` data points.
     A "Total" series is prepended.
     """
     transactions = get_monthly_transactions(session)
@@ -79,14 +79,13 @@ def get_financial_series(session: Session = Depends(get_db)) -> dict[str, Any]:
 
     for date in sorted(amount_by_date):
         row = amount_by_date[date]
-        ts_ms = int(date.timestamp() * 1000)
         current_total = Decimal("0")
         for pk in accounts_pks:
             amount = row.get(pk, prev_amount[pk])
             prev_amount[pk] = amount
             current_total += amount
-            account_points[pk].append([ts_ms, float(round(amount, 2))])
-        total_points.append([ts_ms, float(round(current_total, 2))])
+            account_points[pk].append([date.strftime("%Y-%m-%d"), float(round(amount, 2))])
+        total_points.append([date.strftime("%Y-%m-%d"), float(round(current_total, 2))])
 
     series: List[dict] = [{"name": "Total", "data": total_points}]
     for pk, points in account_points.items():
