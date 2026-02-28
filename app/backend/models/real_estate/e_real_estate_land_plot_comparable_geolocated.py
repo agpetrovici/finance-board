@@ -1,6 +1,6 @@
 from sqlalchemy import DateTime, Float, String, func
 from sqlalchemy.orm import Mapped, mapped_column
-from app.backend.models.db import Base, PointType
+from app.backend.models.db import Base, PointType, PolygonType
 
 
 class RealEstateLandPlotComparableGeolocated(Base):
@@ -12,6 +12,8 @@ class RealEstateLandPlotComparableGeolocated(Base):
     coordinates: Mapped[object] = mapped_column(PointType, nullable=False)
 
     address: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    cadastral_polygon: Mapped[list | None] = mapped_column(PolygonType, nullable=True)
 
     created_at: Mapped[str | None] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[str | None] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())

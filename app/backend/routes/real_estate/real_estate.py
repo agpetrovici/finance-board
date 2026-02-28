@@ -180,12 +180,10 @@ GML_NS = {"gml": "http://www.opengis.net/gml/3.2"}
 logger = logging.getLogger(__name__)
 
 
-def _fetch_parcel_polygon(refcat_14: str) -> dict | None:
-    """Fetch a cadastral parcel polygon from the Catastro INSPIRE WFS.
+def _fetch_parcel_polygon_from_catastro(refcat_14: str) -> list[list[float]] | None:
+    """Fetch a cadastral parcel polygon ring from the Catastro INSPIRE WFS.
 
-    Returns a GeoJSON Feature dict or None if the parcel is not found.
-    Coordinates are requested in EPSG:4326 (WGS84).
-    GML returns them as lat/lng; GeoJSON expects [lng, lat].
+    Returns a GeoJSON coordinate ring ([[lng, lat], ...]) or None.
     """
     try:
         resp = http_client.get(
@@ -211,28 +209,69 @@ def _fetch_parcel_polygon(refcat_14: str) -> dict | None:
         return None
 
     coords_flat = list(map(float, pos_list_el.text.strip().split()))
-    ring = [[coords_flat[i + 1], coords_flat[i]] for i in range(0, len(coords_flat), 2)]
+    return [[coords_flat[i + 1], coords_flat[i]] for i in range(0, len(coords_flat), 2)]
 
-    return {
-        "type": "Feature",
-        "properties": {"refcat": refcat_14},
-        "geometry": {"type": "Polygon", "coordinates": [ring]},
-    }
+
+def _get_or_fetch_parcel_polygon(
+    refcat_14: str,
+    records: list[RealEstateLandPlotComparableGeolocated],
+    session: Session,
+) -> list[list[float]] | None:
+    """Return the polygon ring for a 14-char cadastral reference.
+
+    Checks the DB first; if missing, fetches from Catastro and persists.
+    """
+    for r in records:
+        if r.cadastral_polygon is not None:
+            return r.cadastral_polygon
+
+    ring = _fetch_parcel_polygon_from_catastro(refcat_14)
+    if ring is None:
+        return None
+
+    for r in records:
+        r.cadastral_polygon = ring
+    session.commit()
+
+    return ring
 
 
 @router.get("/api/cadastral-parcels", response_class=JSONResponse)
 def real_estate_cadastral_parcels(session: Session = Depends(get_db)) -> JSONResponse:
     geolocated = session.query(RealEstateLandPlotComparableGeolocated).all()
+    properties = session.query(RealEstateLandPlot).all()
 
-    seen: set[str] = set()
+    by_refcat14: dict[str, list[RealEstateLandPlotComparableGeolocated]] = {}
     for g in geolocated:
-        refcat_14 = g.pk_reference20[:14]
-        seen.add(refcat_14)
+        by_refcat14.setdefault(g.pk_reference20[:14], []).append(g)
+
+    for p in properties:
+        refcat_14 = p.reference[:14] if p.reference else None
+        if refcat_14 and refcat_14 not in by_refcat14:
+            by_refcat14[refcat_14] = []
 
     features: list[dict] = []
-    for refcat in seen:
-        feature = _fetch_parcel_polygon(refcat)
-        if feature:
-            features.append(feature)
+    for refcat, records in by_refcat14.items():
+        ring = _get_or_fetch_parcel_polygon(refcat, records, session)
+        if ring:
+            features.append(
+                {
+                    "type": "Feature",
+                    "properties": {"refcat": refcat},
+                    "geometry": {"type": "Polygon", "coordinates": [ring]},
+                }
+            )
+
+    for p in properties:
+        refcat_14 = p.reference[:14] if p.reference else None
+        if not refcat_14:
+            continue
+        if p.cadastral_polygon is not None:
+            continue
+        for feat in features:
+            if feat["properties"]["refcat"] == refcat_14:
+                p.cadastral_polygon = feat["geometry"]["coordinates"][0]
+                break
+    session.commit()
 
     return JSONResponse(content={"type": "FeatureCollection", "features": features})
