@@ -1,4 +1,4 @@
-from sqlalchemy import DateTime, Float, Integer, String, Text, func
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 from app.backend.models.db import Base, PointType
 
@@ -16,7 +16,7 @@ class RealEstateLandPlotComparable(Base):
     surface: Mapped[float] = mapped_column(Float, nullable=False)
     price_per_square_meter: Mapped[float] = mapped_column(Float, nullable=False)
 
-    reference: Mapped[str] = mapped_column(String(255), nullable=False)
+    reference: Mapped[str | None] = mapped_column(String(20), ForeignKey("e_real_estate_land_plot_comparable_geolocated.pk_reference20"), nullable=True)
 
     coordinates: Mapped[object] = mapped_column(PointType, nullable=False)
     address: Mapped[str] = mapped_column(String(255), nullable=False)

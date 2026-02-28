@@ -36,6 +36,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     from app.backend.models.m_stock_account import StockAccount  # noqa: F401
     from app.backend.models.real_estate.e_real_estate_land_plot import RealEstateLandPlot  # noqa: F401
     from app.backend.models.real_estate.e_real_estate_land_plot_comparable import RealEstateLandPlotComparable  # noqa: F401
+    from app.backend.models.real_estate.e_real_estate_land_plot_comparable_geolocated import RealEstateLandPlotComparableGeolocated  # noqa: F401
 
     # Create all tables
     Base.metadata.create_all(bind=engine)
