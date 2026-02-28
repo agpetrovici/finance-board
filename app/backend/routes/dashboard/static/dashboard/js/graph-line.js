@@ -4,7 +4,7 @@ export function graphLine(seriesData, selector = "#finance-chart") {
     chart: {
       type: "area",
       stacked: false,
-      height: 350,
+      height: 500,
       zoom: {
         type: "x",
         enabled: true,
