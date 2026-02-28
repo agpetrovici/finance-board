@@ -8,7 +8,7 @@ class StockSymbol(Base):
     __tablename__ = "e_stock_symbol"
 
     pk_symbol: Mapped[str] = mapped_column(String(10), primary_key=True)
-    fk_isin: Mapped[str] = mapped_column(String(12), ForeignKey("m_isin.pk_isin"), nullable=False)
+    fk_isin: Mapped[str] = mapped_column(String(12), ForeignKey("m_isin.pk_isin"), nullable=True)
 
     def __repr__(self) -> str:
         return f"<StockSymbol {self.pk_symbol}>"
