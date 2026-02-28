@@ -26,3 +26,16 @@ class RealEstateLandPlot(Base):
 
     def __repr__(self) -> str:
         return f"<RealEstateLandPlot {self.title} {self.price} {self.surface} {self.price_per_square_meter}>"
+
+    def to_dict(self) -> dict:
+        return {
+            "title": self.title,
+            "re_type": self.re_type,
+            "price": self.price,
+            "surface": self.surface,
+            "price_per_m2": round(self.price / self.surface, 2) if self.surface else None,
+            "address": self.address,
+            "reference": self.reference,
+            "lat": self.coordinates.x,
+            "lng": self.coordinates.y,
+        }

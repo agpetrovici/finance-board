@@ -10,6 +10,7 @@ from app.backend.models.db import Base, engine
 from app.backend.routes.api.api import router as router_api
 from app.backend.routes.dashboard.dashboard import router as router_dashboard
 from app.backend.routes.imports.imports import router as router_imports
+from app.backend.routes.real_estate.real_estate import router as router_real_estate
 from app.backend.routes.stocks.stocks import router as router_stocks
 
 
@@ -58,11 +59,16 @@ def create_app() -> FastAPI:
     if imports_static.exists():
         app.mount("/imports/static", StaticFiles(directory=str(imports_static)), name="imports_static")
 
+    real_estate_static = Path(__file__).parent / "routes" / "real_estate" / "static"
+    if real_estate_static.exists():
+        app.mount("/real-estate/static", StaticFiles(directory=str(real_estate_static)), name="real_estate_static")
+
     # Register routers
     app.include_router(router_api)
     app.include_router(router_dashboard)
     app.include_router(router_imports)
     app.include_router(router_stocks)
+    app.include_router(router_real_estate)
 
     @app.get("/")
     def index() -> RedirectResponse:
