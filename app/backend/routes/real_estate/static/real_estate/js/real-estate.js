@@ -58,6 +58,7 @@ async function initMap() {
 
   var comparablesLayer = L.layerGroup();
   comparables.forEach(function (c) {
+    //   Content to display in the popup
     var popupContent =
       "<strong>" +
       c.reference +
@@ -74,11 +75,27 @@ async function initMap() {
       (c.listings_count
         ? "<b>Listings:</b> " + c.listings_count + "<br>"
         : "") +
-      "<b>Address:</b> " + c.address +
+      "<b>Address:</b> " +
+      c.address +
+      "<br>" +
+      '<a href="https://www.google.com/maps?q=' +
+      c.lat +
+      "," +
+      c.lng +
+      '" target="_blank" rel="noopener">Open in Google Maps</a>' +
       (c.listings && c.listings.length
-        ? "<br>" + c.listings.map(function (l) {
-            return '<a href="' + l.url + '" target="_blank" rel="noopener">' + l.title + "</a>";
-          }).join("<br>")
+        ? "<br>" +
+          c.listings
+            .map(function (l) {
+              return (
+                '<a href="' +
+                l.url +
+                '" target="_blank" rel="noopener">' +
+                l.title +
+                "</a>"
+              );
+            })
+            .join("<br>")
         : "");
 
     L.marker([c.lat, c.lng], { icon: comparableIcon })
