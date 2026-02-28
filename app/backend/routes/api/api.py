@@ -8,9 +8,14 @@ from sqlalchemy.orm import Session
 
 from app.backend.models.db import get_db
 from app.backend.models.m_account import Account
-from app.backend.routes.api.apex import ApexAreaChartData
+from app.backend.routes.api.apex import ApexAreaChartData, IncomeAndExpensesStatement
 from app.backend.utils.bank_statement import get_deposits, get_monthly_transactions
-from app.backend.utils.transaction_series import get_stock_transaction_series, get_transaction_series, test_get_transaction_series
+from app.backend.utils.transaction_series import (
+    get_income_expenses_statements,
+    get_stock_transaction_series,
+    get_transaction_series,
+    test_get_transaction_series,
+)
 
 router = APIRouter(prefix="/api", tags=["api"])
 
@@ -93,3 +98,8 @@ def get_financial_series(session: Session = Depends(get_db)) -> dict[str, Any]:
 
     output = ApexAreaChartData(series)
     return output.to_dict()
+
+
+@router.post("/get-income-expenses")
+def get_income_expenses(session: Session = Depends(get_db)) -> list[IncomeAndExpensesStatement]:
+    return get_income_expenses_statements(session)

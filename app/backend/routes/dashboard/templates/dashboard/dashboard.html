@@ -12,6 +12,28 @@
                 <div class="card-body">
                     <h5 class="card-title">Financial Overview</h5>
                     <div id="finance-chart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="card-title mb-0">Income &amp; Expenses per month</h5>
+                        <select id="month-select" class="form-select" style="max-width: 250px;"></select>
+                    </div>
+                    <div id="chart-income-expenses"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Evolution ofIncome and Expenses</h5>
                     <div id="column-chart-stock"></div>
                     <div id="column-chart-categories"></div>
                 </div>
@@ -29,4 +51,5 @@
 <script type="module" src="{{ url_for('dashboard_static', path='dashboard/js/dashboard.js') }}"></script>
 <script type="module" src="{{ url_for('dashboard_static', path='dashboard/js/chart-graph-stacked.js') }}"></script>
 <script type="module" src="{{ url_for('dashboard_static', path='dashboard/js/chart-stock.js') }}"></script>
+<script type="module" src="{{ url_for('dashboard_static', path='dashboard/js/chart-income-expenses.js') }}"></script>
 {% endblock %}

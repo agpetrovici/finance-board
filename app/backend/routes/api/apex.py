@@ -1,4 +1,6 @@
 from typing import Any, Dict, List
+from pydantic import BaseModel
+import datetime
 
 
 class ApexLineChartData:
@@ -27,3 +29,19 @@ class ApexColumnChartData:
 
     def to_dict(self) -> dict:
         return {"series": self.series, "categories": self.categories}
+
+
+class Subcategory(BaseModel):
+    name: str
+    amount: float
+
+
+class Category(BaseModel):
+    name: str
+    subcategories: List[Subcategory]
+
+
+class IncomeAndExpensesStatement(BaseModel):
+    month: datetime.date
+    incomes: List[Category]
+    expenses: List[Category]
