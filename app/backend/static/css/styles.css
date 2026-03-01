@@ -2,6 +2,38 @@
     background-color: var(--dashboard-background-color);
 }
 
+/* Breadcrumbs */
+.dashboard .breadcrumb {
+    --bs-breadcrumb-divider: '/';
+    background-color: rgb(245, 245, 245);
+    border: 1px solid rgb(220, 220, 220);
+    padding: 0.6rem 1rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.8125rem;
+    letter-spacing: 0.02em;
+    border-radius: 0.5rem;
+}
+
+.dashboard .breadcrumb-item + .breadcrumb-item::before {
+    color: rgba(var(--bs-body-color-rgb), 0.25);
+}
+
+.dashboard .breadcrumb-item a {
+    color: rgba(var(--bs-body-color-rgb), 0.5);
+    text-decoration: none;
+    font-weight: 400;
+    transition: color 0.15s ease;
+}
+
+.dashboard .breadcrumb-item a:hover {
+    color: rgba(var(--bs-body-color-rgb), 0.8);
+}
+
+.dashboard .breadcrumb-item.active {
+    color: rgba(var(--bs-body-color-rgb), 0.9);
+    font-weight: 500;
+}
+
     .bd-placeholder-img {
         font-size: 1.125rem;
         text-anchor: middle;
