@@ -43,6 +43,11 @@ def calculate_portfolio(
     the average cost is recomputed; on each sell the cost allocated to the
     sold shares equals ``qty * avg_cost`` (the average stays unchanged).
 
+    ``total_invested`` is net capital deployed (buys minus sells), so that
+    buy/sell/buy cycles correctly reflect realized P&L.  Example: buy $100,
+    sell for $80 (realized loss $20), buy $100 again → total_invested = $120,
+    total_return_pct = -20/120 ≈ -16.7%.
+
     All values are normalised to USD.  When ``fx_rates`` is provided,
     transactions whose ``value_broker_currency`` is not USD are converted
     using the daily close rate for the corresponding pair (e.g. EUR/USD).
@@ -88,8 +93,8 @@ def calculate_portfolio(
         defaultdict(lambda: defaultdict(list))
     )
 
-    portfolio_total_invested = 0.0
-    portfolio_total_cash_returned = 0.0
+    gross_invested = 0.0  # Sum of all buy amounts
+    gross_cash_returned = 0.0  # Sum of all sell amounts
 
     for tx in transactions:
         symbol = tx.fk_symbol
@@ -110,9 +115,9 @@ def calculate_portfolio(
         # Use abs() so sign convention (broker may store buys/sells as +/-) is ignored
         cash_amount = abs(total_val)
         if tx.fk_order_class == ORDER_CLASS_BUY:
-            portfolio_total_invested += cash_amount
+            gross_invested += cash_amount
         else:
-            portfolio_total_cash_returned += cash_amount
+            gross_cash_returned += cash_amount
 
     # Process buys before sells on same date so avg cost is up-to-date
     for symbol_txs in tx_by_symbol.values():
@@ -259,23 +264,23 @@ def calculate_portfolio(
         )
 
     # -- 5. Portfolio-level summary ------------------------------------------
+    # total_invested = net capital deployed (buys - sells).  Used as denominator
+    # for return % so that buy/sell/buy cycles show correct realized P&L impact.
     latest_total = daily_totals[-1] if daily_totals else None
 
     total_market_value = latest_total.value if latest_total else 0.0
     total_unrealized_pnl = latest_total.unrealized_pnl if latest_total else 0.0
     total_realized_pnl = latest_total.realized_pnl if latest_total else 0.0
     total_return = latest_total.total_pnl if latest_total else 0.0
-    net_invested = portfolio_total_invested - portfolio_total_cash_returned
+    net_invested = gross_invested - gross_cash_returned
     total_return_pct = (
-        (total_return / portfolio_total_invested * 100)
-        if portfolio_total_invested > 0
-        else 0.0
+        (total_return / net_invested * 100) if net_invested > 0 else 0.0
     )
 
     return Portfolio(
         stocks=stocks,
-        total_invested=portfolio_total_invested,
-        total_cash_returned=portfolio_total_cash_returned,
+        total_invested=net_invested,
+        total_cash_returned=gross_cash_returned,
         net_invested=net_invested,
         total_market_value=total_market_value,
         total_unrealized_pnl=total_unrealized_pnl,
