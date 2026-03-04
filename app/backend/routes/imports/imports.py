@@ -4,8 +4,7 @@ from decimal import Decimal
 from os import getenv
 from pathlib import Path
 from typing import Any
-
-from fastapi import APIRouter, Depends, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from mindee import ClientV2
@@ -26,6 +25,7 @@ from app.backend.routes.imports.utils.imagin.process_imagin import process_imagi
 from app.backend.routes.imports.utils.mindee_utils import polygon_to_bbox
 from app.backend.routes.imports.utils.revolut.process_revolut import get_new_movements_revolut
 from app.backend.routes.imports.utils.stock.stock import parse_stock_data
+from app.backend.routes.imports.utils.trade_republic.process_pdf import process_pdf
 from app.backend.utils.receipts.prediction import make_receipt_prediction
 from app.backend.utils.receipts.transaction import get_transaction
 from app.backend.utils.receipts.utils import save_image, save_result
@@ -409,6 +409,50 @@ async def import_from_degiro(request: Request, session: Session = Depends(get_db
 
             if existing:
                 return {"status": "error", "message": f"Transaction with order ID {transaction.order_id} already exists"}
+
+        # Save to database
+        session.add_all(new_stock_data)
+        session.commit()
+        return {"status": "success", "message": f"Successfully imported {len(new_stock_data)} stock records."}
+
+    except Exception as e:
+        session.rollback()
+        return {"status": "error", "message": f"Error processing stock data: {str(e)}"}
+
+
+@router.get("/trade-republic", response_class=HTMLResponse)
+def import_trade_republic(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "imports/tpl_trade_republic.html")
+
+
+@router.post("/from-trade-republic")
+async def import_from_trade_republic(
+    files: list[UploadFile] = File(...),
+    session: Session = Depends(get_db),
+) -> dict[str, Any]:
+    if not files:
+        return {"status": "error", "message": "No PDF files provided."}
+
+    try:
+        new_stock_data = []
+        for file in files:
+            transaction = await process_pdf(file, session)
+            existing = (
+                session.query(StockTransaction)
+                .filter_by(
+                    fk_stock_account=transaction.fk_stock_account,
+                    order_id=transaction.order_id,
+                    execution_date=transaction.execution_date,
+                )
+                .first()
+            )
+
+            if existing:
+                return {
+                    "status": "error",
+                    "message": f"Transaction with order ID {transaction.order_id} already exists",
+                }
+            new_stock_data.append(transaction)
 
         # Save to database
         session.add_all(new_stock_data)

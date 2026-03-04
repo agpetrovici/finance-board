@@ -35,6 +35,9 @@ openpyxl = "^3.1.5"
 mindee = "^4.31.0"
 bs4 = "^0.0.2"
 
+# pdf files processing
+pdfplumber = "^0.11.9"
+
 # Stock data API
 twelvedata = "^1.2.28"
 

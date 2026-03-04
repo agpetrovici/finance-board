@@ -10,6 +10,7 @@ class StockAccount(Base):
     pk_stock_account: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str | None] = mapped_column(String(100))
     description: Mapped[str | None] = mapped_column(String(255))
+    iban: Mapped[str | None] = mapped_column(String(100))
 
     # Timestamps
     created_at: Mapped[str | None] = mapped_column(DateTime, server_default=func.now())

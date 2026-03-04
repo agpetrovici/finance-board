@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}finance-board | Trade Republic Import{% endblock %}
+
+{% block title_inline %}Trade Republic{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="pdfFiles" class="form-label">Upload PDF file(s)</label>
+                <input type="file" class="form-control" id="pdfFiles" name="files" accept=".pdf,application/pdf" multiple>
+            </div>
+            <button type="button" class="btn btn-primary" id="stock-import">Import</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block aditional_scripts %}
+<script type="module" src="{{ url_for('imports_static', path='imports/js/script-trade-republic.js') }}"></script>
+{% endblock %}

@@ -12,14 +12,31 @@
                 <div class="card-body">
                     <h5 class="card-title">Data import</h5>
                     <ul>
-                        <li><a href="{{ url_for('import_bbva') }}">BBVA</a></li>
-                        <li><a href="{{ url_for('import_bankinter') }}">Bankinter</a></li>
-                        <li><a href="{{ url_for('import_imagin') }}">Imagin</a></li>
-                        <li><a href="{{ url_for('import_revolut') }}">Revolut</a></li>
-                        <li><a href="{{ url_for('import_norma43') }}">Norma43</a></li>
-                        <li><a href="{{ url_for('import_binance') }}">Binance</a></li>
-                        <li><a href="{{ url_for('import_receipts') }}">Receipts</a></li>
-                        <li><a href="{{ url_for('import_degiro') }}">Degiro</a></li>
+                        <li>Banking
+                            <ul>
+                                <li><a href="{{ url_for('import_bbva') }}">BBVA</a></li>
+                                <li><a href="{{ url_for('import_bankinter') }}">Bankinter</a></li>
+                                <li><a href="{{ url_for('import_imagin') }}">Imagin</a></li>
+                                <li><a href="{{ url_for('import_revolut') }}">Revolut</a></li>
+                                <li><a href="{{ url_for('import_norma43') }}">Norma43</a></li>
+                            </ul>
+                        </li>
+                        <li>Crypto
+                            <ul>
+                                <li><a href="{{ url_for('import_binance') }}">Binance</a></li>
+                            </ul>
+                        </li>
+                        <li>Receipts
+                            <ul>
+                                <li><a href="{{ url_for('import_receipts') }}">Receipts</a></li>
+                            </ul>
+                        </li>
+                        <li>Stock
+                            <ul>
+                                <li><a href="{{ url_for('import_degiro') }}">Degiro</a></li>
+                                <li><a href="{{ url_for('import_trade_republic') }}">Trade Republic</a></li>
+                            </ul>
+                        </li>
                     </ul>
                 </div>
             </div>

@@ -45,4 +45,4 @@ class StockTransaction(Base):
     updated_at: Mapped[str | None] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
     def __repr__(self) -> str:
-        return f"<StockTransaction {self.execution_date} {self.fk_order_type} {self.total_user_currency}>"
+        return f"<StockTransaction {self.execution_date} {self.quantity} {self.fk_symbol} {self.total_user_currency}>"
