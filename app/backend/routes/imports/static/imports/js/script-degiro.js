@@ -7,7 +7,7 @@ async function importStock() {
   console.log(stockData);
 
   try {
-    const data = await sendJSONgetJSON("/imports/from-stock", {
+    const data = await sendJSONgetJSON("/imports/from-degiro", {
       text: stockData,
       accountPk: accountPk,
     });
