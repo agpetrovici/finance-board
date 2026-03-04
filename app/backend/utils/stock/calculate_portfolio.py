@@ -68,6 +68,18 @@ def calculate_portfolio(
         price_lookup[p.fk_symbol][d] = p.close
         all_dates.add(d)
 
+    # Include transaction dates so that sells/buys on days with no price entry
+    # (weekends, holidays, sparse data) are still processed in the date walk.
+    for tx in transactions:
+        if tx.fk_symbol is None:
+            continue
+        d = (
+            tx.execution_date.date()
+            if isinstance(tx.execution_date, datetime.datetime)
+            else tx.execution_date
+        )
+        all_dates.add(d)
+
     sorted_dates = sorted(all_dates)
 
     # -- 2. Build per-symbol transaction list --------------------------------
@@ -95,10 +107,12 @@ def calculate_portfolio(
             total_val = _to_usd(total_val, tx.value_broker_currency, d, fx_rates)
         tx_by_symbol[symbol][d].append((tx.fk_order_class, tx.quantity, total_val))
 
+        # Use abs() so sign convention (broker may store buys/sells as +/-) is ignored
+        cash_amount = abs(total_val)
         if tx.fk_order_class == ORDER_CLASS_BUY:
-            portfolio_total_invested += abs(total_val)
+            portfolio_total_invested += cash_amount
         else:
-            portfolio_total_cash_returned += abs(total_val)
+            portfolio_total_cash_returned += cash_amount
 
     # Process buys before sells on same date so avg cost is up-to-date
     for symbol_txs in tx_by_symbol.values():
@@ -121,29 +135,30 @@ def calculate_portfolio(
         for d in sorted_dates:
             if d in symbol_txs:
                 for order_class, qty, total_val in symbol_txs[d]:
+                    cash_amount = abs(total_val)
+                    qty_signed = abs(qty)  # quantity is always positive magnitude
                     if order_class == ORDER_CLASS_BUY:
-                        running_cost_basis += total_val
-                        running_qty += qty
+                        running_cost_basis += cash_amount
+                        running_qty += qty_signed
                     elif order_class == ORDER_CLASS_SELL:
                         avg_cost = (
                             running_cost_basis / running_qty
                             if running_qty > 0
                             else 0.0
                         )
-                        cost_of_sold = qty * avg_cost
-                        cumulative_realized_pnl += total_val - cost_of_sold
+                        cost_of_sold = qty_signed * avg_cost
+                        # Proceeds (cash received) minus cost = realized P&L
+                        cumulative_realized_pnl += cash_amount - cost_of_sold
                         running_cost_basis -= cost_of_sold
-                        running_qty -= qty
+                        running_qty -= qty_signed
 
             if running_qty > 0 and d in symbol_prices:
                 price = symbol_prices[d]
                 abs_cost = abs(running_cost_basis)
-                avg_cost = abs_cost / running_qty if running_qty > 0 else 0.0
+                avg_cost = abs_cost / running_qty
                 market_value = running_qty * price
                 unrealized = market_value - abs_cost
-                unrealized_pct = (
-                    (unrealized / abs_cost * 100) if abs_cost > 0 else 0.0
-                )
+                unrealized_pct = (unrealized / abs_cost * 100) if abs_cost > 0 else 0.0
                 total_pnl = unrealized + cumulative_realized_pnl
 
                 values.append(
@@ -160,6 +175,23 @@ def calculate_portfolio(
                         total_pnl=total_pnl,
                     )
                 )
+            elif running_qty == 0 and cumulative_realized_pnl != 0.0:
+                # Fully closed position: carry realized PnL forward so the Total
+                # series and portfolio summary remain accurate after a full sell.
+                values.append(
+                    StockValue(
+                        date=datetime.datetime.combine(d, datetime.time.min),
+                        quantity=0,
+                        price=0.0,
+                        value=0.0,
+                        cost_basis=0.0,
+                        avg_cost_per_share=0.0,
+                        unrealized_pnl=0.0,
+                        unrealized_pnl_pct=0.0,
+                        realized_pnl=cumulative_realized_pnl,
+                        total_pnl=cumulative_realized_pnl,
+                    )
+                )
 
         if values:
             stocks.append(Stock(symbol=symbol, values=values))
@@ -171,6 +203,16 @@ def calculate_portfolio(
             v.date.date(): v for v in stock.values
         }
 
+    def _value_for_date(symbol: str, d: datetime.date) -> StockValue | None:
+        """Return the StockValue for date d, or the most recent prior value.
+        Carries forward holding positions so unrealized PnL is not lost on
+        dates without price data (e.g. weekends)."""
+        by_date = stock_value_by_date[symbol]
+        if d in by_date:
+            return by_date[d]
+        prior = [dt for dt in by_date if dt <= d]
+        return by_date[max(prior)] if prior else None
+
     daily_totals: list[StockValue] = []
     for d in sorted_dates:
         total_value = 0.0
@@ -179,14 +221,14 @@ def calculate_portfolio(
         total_realized = 0.0
 
         for stock in stocks:
-            val = stock_value_by_date[stock.symbol].get(d)
+            val = _value_for_date(stock.symbol, d)
             if val:
                 total_value += val.value
                 total_cost += val.cost_basis
                 total_unrealized += val.unrealized_pnl
                 total_realized += val.realized_pnl
 
-        if total_value > 0:
+        if total_value > 0 or total_realized != 0.0:
             t_pnl = total_unrealized + total_realized
             daily_totals.append(
                 StockValue(
