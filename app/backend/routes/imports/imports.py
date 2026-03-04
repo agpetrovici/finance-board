@@ -376,7 +376,9 @@ async def update_receipt(request: Request, session: Session = Depends(get_db)) -
 
 @router.get("/stock", response_class=HTMLResponse)
 def import_stock(request: Request, session: Session = Depends(get_db)) -> HTMLResponse:
-    accounts = session.query(StockAccount).all()
+    accounts_raw = session.query(StockAccount).all()
+    # Transform accounts to a list of dicts
+    accounts = [{"account_pk": account.pk_stock_account, "name": account.name} for account in accounts_raw]
     return templates.TemplateResponse(request, "imports/tpl_stock.html", {"accounts": accounts})
 
 
