@@ -17,13 +17,17 @@ RUN poetry install --only main --no-root
 # ── runtime stage ─────────────────────────────────────────────────────────────
 FROM python:3.13-slim-bookworm AS runtime
 
+ARG APP_UID=1000
+ARG APP_GID=1000
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH"
 
-# Unprivileged user — required for production deployments on Linux servers
-RUN groupadd --gid 1001 appgroup && \
-    useradd --uid 1001 --gid appgroup --no-create-home appuser
+# Unprivileged user. UID/GID should match the host owner of bind-mounted files
+# (see docker-compose build args); otherwise main.py can be unreadable (e.g. mode 660).
+RUN groupadd --gid "${APP_GID}" appgroup && \
+    useradd --uid "${APP_UID}" --gid appgroup --no-create-home appuser
 
 WORKDIR /app
 

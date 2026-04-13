@@ -9,6 +9,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-finance}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-finance}
       POSTGRES_DB: ${POSTGRES_DB:-finance}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -18,7 +20,12 @@ services:
       retries: 10
 
   web:
-    build: .
+    build:
+      context: .
+      args:
+        # Match `id -u` / `id -g` so bind-mounted source is readable (set in .env if needed).
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
     restart: unless-stopped
     ports:
       - "${FASTAPI_PORT:-8000}:8000"
