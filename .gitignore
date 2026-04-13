@@ -1,10 +1,18 @@
 # folders
 __pycache__
+sql
+img
 
 # files
 .env
 *.pem
+data/
 
-#### pyenv
+#### python
 # added by pyenv to identify the pyenv to use in this folder
 .python-version
+.coverage
+
+# documentation
+docs/custom_rules
+docs/renta
