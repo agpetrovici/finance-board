@@ -24,7 +24,7 @@ jinja2 = "^3.1.5"
 
 # database
 sqlalchemy = "^2.0.46"
-psycopg2-binary = "^2.9.10" # to use only in development
+psycopg2-binary = "^2.9.10"
 
 # xls files
 pandas = "^2.3.1"
@@ -40,6 +40,7 @@ pdfplumber = "^0.11.9"
 
 # Stock data API
 twelvedata = "^1.2.28"
+shapely = "^2.1.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.0.2"
