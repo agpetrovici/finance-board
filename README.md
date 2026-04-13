@@ -69,3 +69,17 @@ PostgreSQL data is stored in a Docker named volume (`postgres_data`) and persist
 ```shell
 pytest --cov=. --cov-report=html tests/
 ```
+
+## Database
+
+### Dump
+
+```shell
+pg_dump \
+  --host=<host> --port=<port> --username=<username> \
+  --format=plain \
+  --clean --if-exists \
+  --no-owner --no-acl \
+  --file=dump-finance_board-$(date +%Y%m%d_%H%M%S).sql \
+  finance_board
+```
