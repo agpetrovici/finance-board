@@ -45,5 +45,42 @@ services:
       postgres:
         condition: service_healthy
 
+  # Runs etl/etl_fx_rates.py and etl/etl_prices_portfolio.py on a fixed interval (~once/day; not wall-clock aligned).
+  etl_fx_rates:
+    build:
+      context: .
+      args:
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
+    restart: unless-stopped
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      SQLALCHEMY_DATABASE_URI: "postgresql+psycopg2://${POSTGRES_USER:-finance}:${POSTGRES_PASSWORD:-finance}@postgres:5432/${POSTGRES_DB:-finance}"
+      TZ: UTC
+      ETL_FX_INTERVAL_SEC: ${ETL_FX_INTERVAL_SEC:-86400}
+    volumes:
+      - ./main.py:/app/main.py:ro
+      - ./app:/app/app:ro
+      - ./etl:/app/etl:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        cd /app
+        export PYTHONPATH=/app
+        while true; do
+          echo "$$(date -u -Iseconds) running etl_fx_rates"
+          python etl/etl_fx_rates.py || echo "$$(date -u -Iseconds) etl_fx_rates exited $$?"
+          echo "$$(date -u -Iseconds) running etl_prices_portfolio"
+          python etl/etl_prices_portfolio.py || echo "$$(date -u -Iseconds) etl_prices_portfolio exited $$?"
+          sleep "$${ETL_FX_INTERVAL_SEC:-86400}"
+        done
+
 volumes:
   postgres_data:
