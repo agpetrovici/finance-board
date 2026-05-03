@@ -1,6 +1,8 @@
 const fmt = (v) => "$" + v.toFixed(2);
 const fmtPct = (v) => v.toFixed(2) + "%";
 
+const LW = LightweightCharts;
+
 document.addEventListener("DOMContentLoaded", initPortfolioCharts);
 
 async function initPortfolioCharts() {
@@ -17,6 +19,56 @@ async function initPortfolioCharts() {
   renderStockPerformanceBars(data.stock_performance);
   renderStockDetailChart(data.per_stock_series);
   renderMonthlyReturnsChart(data.monthly_returns);
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Convert ApexCharts-style data points to {time, value} for Lightweight Charts. */
+function toPoints(data) {
+  return data.map((d) => {
+    if (Array.isArray(d)) {
+      const [t, v] = d;
+      const time =
+        typeof t === "number" ? new Date(t).toISOString().slice(0, 10) : t;
+      return { time, value: v };
+    }
+    const t = d.x;
+    const time =
+      typeof t === "number" ? new Date(t).toISOString().slice(0, 10) : t;
+    return { time, value: d.y };
+  });
+}
+
+function lwChartBase(containerId, height = 380) {
+  const container = document.getElementById(containerId);
+  container.style.height = height + "px";
+
+  const chart = LW.createChart(container, {
+    layout: {
+      background: { type: "solid", color: "transparent" },
+      textColor:
+        getComputedStyle(document.body)
+          .getPropertyValue("--bs-body-color")
+          .trim() || "#333",
+    },
+    grid: {
+      vertLines: { color: "rgba(128,128,128,0.1)" },
+      horzLines: { color: "rgba(128,128,128,0.1)" },
+    },
+    rightPriceScale: { borderVisible: false },
+    timeScale: { borderVisible: false },
+    crosshair: { mode: LW.CrosshairMode.Normal },
+    localization: { priceFormatter: (p) => fmt(p) },
+  });
+
+  const resizeObserver = new ResizeObserver(() => {
+    chart.applyOptions({ width: container.clientWidth });
+  });
+  resizeObserver.observe(container);
+
+  return chart;
 }
 
 // ---------------------------------------------------------------------------
@@ -44,96 +96,81 @@ function renderSummaryCards(summary) {
 }
 
 // ---------------------------------------------------------------------------
-// Chart 1 – Portfolio Value vs Cost Basis (Area)
+// Chart 1 – Portfolio Value vs Cost Basis (Lightweight Charts – Area)
 // ---------------------------------------------------------------------------
 function renderValueVsCostChart(data) {
   if (!data.series || data.series.length === 0) return;
 
-  const options = {
-    series: data.series,
-    chart: {
-      type: "area",
-      height: 380,
-      zoom: { type: "x", enabled: true, autoScaleYaxis: true },
-      toolbar: { autoSelected: "zoom" },
-    },
-    colors: ["#008FFB", "#546E7A"],
-    dataLabels: { enabled: false },
-    markers: { size: 0 },
-    stroke: { curve: "straight", width: 2 },
-    fill: {
-      type: "gradient",
-      gradient: {
-        shadeIntensity: 1,
-        inverseColors: false,
-        opacityFrom: 0.45,
-        opacityTo: 0.05,
-        stops: [0, 90, 100],
-      },
-    },
-    xaxis: { type: "datetime" },
-    yaxis: {
-      labels: { formatter: (v) => fmt(v) },
-      title: { text: "Value (USD)" },
-    },
-    tooltip: { shared: true, y: { formatter: (v) => fmt(v) } },
-    legend: { position: "top" },
-  };
+  const chart = lwChartBase("chart-value-vs-cost");
+  const colors = ["#008FFB", "#546E7A"];
 
-  const chart = new ApexCharts(
-    document.querySelector("#chart-value-vs-cost"),
-    options,
-  );
-  chart.render();
+  data.series.forEach((s, i) => {
+    const color = colors[i % colors.length];
+    const series = chart.addSeries(LW.AreaSeries, {
+      title: s.name,
+      lineColor: color,
+      topColor: color + "55",
+      bottomColor: "transparent",
+      lineWidth: 2,
+      priceLineVisible: false,
+    });
+    series.setData(toPoints(s.data));
+  });
+
+  chart.timeScale().fitContent();
 }
 
 // ---------------------------------------------------------------------------
-// Chart 2 – Cumulative P&L (Line)
+// Chart 2 – Cumulative P&L (Lightweight Charts – Line + baseline)
 // ---------------------------------------------------------------------------
 function renderPnlChart(data) {
   if (!data.series || data.series.length === 0) return;
 
-  const options = {
-    series: data.series,
-    chart: {
-      type: "line",
-      height: 380,
-      zoom: { type: "x", enabled: true, autoScaleYaxis: true },
-      toolbar: { autoSelected: "zoom" },
-    },
-    colors: ["#008FFB", "#00E396", "#263238"],
-    dataLabels: { enabled: false },
-    stroke: { curve: "straight", width: [2, 2, 3] },
-    markers: { size: 0 },
-    xaxis: { type: "datetime" },
-    yaxis: {
-      labels: { formatter: (v) => fmt(v) },
-      title: { text: "P&L (USD)" },
-    },
-    annotations: {
-      yaxis: [
-        {
-          y: 0,
-          borderColor: "#999",
-          strokeDashArray: 4,
-          label: {
-            text: "Break-even",
-            position: "front",
-            style: { background: "#fff", fontSize: "11px" },
-          },
-        },
-      ],
-    },
-    tooltip: { shared: true, y: { formatter: (v) => fmt(v) } },
-    legend: { position: "top" },
-  };
+  const chart = lwChartBase("chart-pnl");
+  const colors = ["#008FFB", "#00E396", "#263238"];
 
-  const chart = new ApexCharts(document.querySelector("#chart-pnl"), options);
-  chart.render();
+  data.series.forEach((s, i) => {
+    const color = colors[i % colors.length];
+    const isFirst = i === 0;
+
+    const series = isFirst
+      ? chart.addSeries(LW.BaselineSeries, {
+          title: s.name,
+          baseValue: { type: "price", price: 0 },
+          topLineColor: "#00E396",
+          topFillColor1: "rgba(0,227,150,0.28)",
+          topFillColor2: "rgba(0,227,150,0.05)",
+          bottomLineColor: "#FF4560",
+          bottomFillColor1: "rgba(255,69,96,0.05)",
+          bottomFillColor2: "rgba(255,69,96,0.28)",
+          priceLineVisible: false,
+        })
+      : chart.addSeries(LW.LineSeries, {
+          title: s.name,
+          color: color,
+          lineWidth: 2,
+          priceLineVisible: false,
+        });
+
+    series.setData(toPoints(s.data));
+
+    if (isFirst) {
+      series.createPriceLine({
+        price: 0,
+        color: "#999",
+        lineWidth: 1,
+        lineStyle: LW.LineStyle.Dashed,
+        axisLabelVisible: false,
+        title: "Break-even",
+      });
+    }
+  });
+
+  chart.timeScale().fitContent();
 }
 
 // ---------------------------------------------------------------------------
-// Chart 3 – Per-Stock Return % (Horizontal Bar)
+// Chart 3 – Per-Stock Return % (ApexCharts – Horizontal Bar)
 // ---------------------------------------------------------------------------
 function renderStockPerformanceBars(data) {
   if (!data || data.length === 0) return;
@@ -179,7 +216,7 @@ function renderStockPerformanceBars(data) {
 }
 
 // ---------------------------------------------------------------------------
-// Chart 4 – Portfolio Allocation (Donut)
+// Chart 4 – Portfolio Allocation (ApexCharts – Donut)
 // ---------------------------------------------------------------------------
 function renderAllocationDonut(data) {
   if (!data || data.length === 0) return;
@@ -224,7 +261,7 @@ function renderAllocationDonut(data) {
 }
 
 // ---------------------------------------------------------------------------
-// Chart 5 – Individual Stock Detail (Area with selector)
+// Chart 5 – Individual Stock Detail (Lightweight Charts – Area with selector)
 // ---------------------------------------------------------------------------
 function renderStockDetailChart(perStockSeries) {
   const symbols = Object.keys(perStockSeries);
@@ -238,65 +275,46 @@ function renderStockDetailChart(perStockSeries) {
     select.appendChild(opt);
   });
 
-  let chartInstance = null;
+  const chart = lwChartBase("chart-stock-detail");
+  const colors = ["#008FFB", "#546E7A"];
 
-  function buildOptions(symbol) {
-    const stockData = perStockSeries[symbol];
-    return {
-      series: [
-        { name: "Market Value", data: stockData.market_value },
-        { name: "Cost Basis", data: stockData.cost_basis },
-      ],
-      chart: {
-        type: "area",
-        height: 380,
-        zoom: { type: "x", enabled: true, autoScaleYaxis: true },
-        toolbar: { autoSelected: "zoom" },
-      },
-      colors: ["#008FFB", "#546E7A"],
-      dataLabels: { enabled: false },
-      markers: { size: 0 },
-      stroke: { curve: "straight", width: 2 },
-      fill: {
-        type: "gradient",
-        gradient: {
-          shadeIntensity: 1,
-          inverseColors: false,
-          opacityFrom: 0.45,
-          opacityTo: 0.05,
-          stops: [0, 90, 100],
-        },
-      },
-      xaxis: { type: "datetime" },
-      yaxis: {
-        labels: { formatter: (v) => fmt(v) },
-        title: { text: "Value (USD)" },
-      },
-      tooltip: { shared: true, y: { formatter: (v) => fmt(v) } },
-      legend: { position: "top" },
-    };
+  const seriesInstances = [
+    chart.addSeries(LW.AreaSeries, {
+      title: "Market Value",
+      lineColor: colors[0],
+      topColor: colors[0] + "55",
+      bottomColor: "transparent",
+      lineWidth: 2,
+      priceLineVisible: false,
+    }),
+    chart.addSeries(LW.AreaSeries, {
+      title: "Cost Basis",
+      lineColor: colors[1],
+      topColor: colors[1] + "55",
+      bottomColor: "transparent",
+      lineWidth: 2,
+      priceLineVisible: false,
+    }),
+  ];
+
+  function loadSymbol(sym) {
+    const stockData = perStockSeries[sym];
+    seriesInstances[0].setData(toPoints(stockData.market_value));
+    seriesInstances[1].setData(toPoints(stockData.cost_basis));
+    chart.timeScale().fitContent();
   }
 
-  chartInstance = new ApexCharts(
-    document.querySelector("#chart-stock-detail"),
-    buildOptions(symbols[0]),
-  );
-  chartInstance.render();
+  loadSymbol(symbols[0]);
 
   function onStockChange() {
-    const sym = select.value;
-    const stockData = perStockSeries[sym];
-    chartInstance.updateSeries([
-      { name: "Market Value", data: stockData.market_value },
-      { name: "Cost Basis", data: stockData.cost_basis },
-    ]);
+    loadSymbol(select.value);
   }
 
   select.addEventListener("change", onStockChange);
 }
 
 // ---------------------------------------------------------------------------
-// Chart 6 – Monthly Returns (Column)
+// Chart 6 – Monthly Returns (ApexCharts – Column)
 // ---------------------------------------------------------------------------
 function renderMonthlyReturnsChart(data) {
   if (!data.categories || data.categories.length === 0) return;
