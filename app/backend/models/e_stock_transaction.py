@@ -2,7 +2,7 @@ from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.backend.models.db import Base
-
+from app.backend.models.db import SessionLocal
 
 class StockTransaction(Base):
     __tablename__ = "e_stock_transaction"
@@ -43,6 +43,11 @@ class StockTransaction(Base):
 
     created_at: Mapped[str | None] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[str | None] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    @classmethod
+    def get_distinct_symbols(cls) -> list[str]:
+        with SessionLocal() as session:
+            return [row[0] for row in session.query(cls.fk_symbol).distinct().all()]
 
     def __repr__(self) -> str:
         return f"<StockTransaction {self.execution_date} {self.quantity} {self.fk_symbol} {self.total_user_currency}>"

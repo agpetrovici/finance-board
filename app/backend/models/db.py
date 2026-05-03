@@ -10,6 +10,18 @@ engine = create_engine(getenv("SQLALCHEMY_DATABASE_URI", ""))
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
+def get_session() -> Session:
+    """Create and return a new SQLAlchemy session.
+
+    Usage::
+
+        with get_session() as session:
+            session.add(obj)
+            session.commit()
+    """
+    return Session(engine)
+
+
 class PointType(UserDefinedType):
     cache_ok = True
 
@@ -23,6 +35,7 @@ class PointType(UserDefinedType):
             if isinstance(value, Point):
                 return f"({value.x},{value.y})"
             return value
+
         return process
 
     def result_processor(self, dialect, coltype):
@@ -31,6 +44,7 @@ class PointType(UserDefinedType):
                 return None
             x, y = value.strip("()").split(",")
             return Point(float(x), float(y))
+
         return process
 
 
@@ -48,6 +62,7 @@ class PolygonType(UserDefinedType):
                 points = ",".join(f"({x},{y})" for x, y in value)
                 return f"({points})"
             return value
+
         return process
 
     def result_processor(self, dialect, coltype):
@@ -60,6 +75,7 @@ class PolygonType(UserDefinedType):
                 x, y = pair.strip("()").split(",")
                 points.append([float(x), float(y)])
             return points
+
         return process
 
 
