@@ -12,7 +12,7 @@ python-dotenv = "^1.0.1"
 csb43 = "^1.0.0"  # bank statement parser
 pyyaml = "^6.0.2"  #  used by csb43 for output generation
 tablib = "^3.7.0"  #  used by csb43 for output generation
-requests = "^2.32.3"
+requests = "^2.34.0"
 python-binance = "^1.0.27"  # external dependency to connect to binance
 orjson = "^3.10.14"  # used by python-binance even if is not a direct dependency
 
