@@ -26,7 +26,6 @@ from app.backend.utils.transaction_series import (
 router = APIRouter(prefix="/api", tags=["api"])
 
 
-
 @router.post("/get-transaction-by-day")
 def get_transaction_by_day(session: Session = Depends(get_db)) -> dict[str, Any]:
     output = get_transaction_series(session)
@@ -124,12 +123,7 @@ def get_portfolio_performance(session: Session = Depends(get_db)) -> dict[str, A
         return _empty_performance_response()
 
     used_symbols = list({tx.fk_symbol for tx in stock_transactions if tx.fk_symbol})
-    stock_prices = (
-        session.query(StockPriceDaily)
-        .filter(StockPriceDaily.fk_symbol.in_(used_symbols))
-        .order_by(StockPriceDaily.date.asc())
-        .all()
-    )
+    stock_prices = session.query(StockPriceDaily).filter(StockPriceDaily.fk_symbol.in_(used_symbols)).order_by(StockPriceDaily.date.asc()).all()
 
     fx_rates = _build_fx_lookup(stock_transactions, session)
     portfolio = calculate_portfolio(stock_transactions, stock_prices, fx_rates)
@@ -141,36 +135,18 @@ def _build_fx_lookup(
     session: Session,
 ) -> dict[str, dict[datetime.date, float]]:
     """Build ``{pair: {date: close_rate}}`` for every non-USD broker currency."""
-    non_usd = {
-        tx.value_broker_currency
-        for tx in transactions
-        if tx.value_broker_currency and tx.value_broker_currency != "USD"
-    }
+    non_usd = {tx.value_broker_currency for tx in transactions if tx.value_broker_currency and tx.value_broker_currency != "USD"}
     if not non_usd:
         return {}
 
-    dates = [
-        (
-            tx.execution_date.date()
-            if isinstance(tx.execution_date, datetime)
-            else tx.execution_date
-        )
-        for tx in transactions
-    ]
+    dates = [(tx.execution_date.date() if isinstance(tx.execution_date, datetime) else tx.execution_date) for tx in transactions]
     min_date, max_date = min(dates), max(dates)
 
     lookup: dict[str, dict[datetime.date, float]] = {}
     for currency in non_usd:
         pair = f"{currency}/USD"
         rates = FxRateDaily.get_rates(pair, min_date, max_date, session)
-        lookup[pair] = {
-            (
-                r.date.date()
-                if isinstance(r.date, datetime)
-                else r.date
-            ): r.close
-            for r in rates
-        }
+        lookup[pair] = {(r.date.date() if isinstance(r.date, datetime) else r.date): r.close for r in rates}
     return lookup
 
 
@@ -196,9 +172,7 @@ def _empty_performance_response() -> dict[str, Any]:
 
 
 def _build_performance_response(portfolio: Portfolio) -> dict[str, Any]:
-    total_stock = next(
-        (s for s in portfolio.stocks if s.symbol == "Total"), None
-    )
+    total_stock = next((s for s in portfolio.stocks if s.symbol == "Total"), None)
     individual_stocks = [s for s in portfolio.stocks if s.symbol != "Total"]
 
     def _ts(dt: Any) -> int:
@@ -211,17 +185,11 @@ def _build_performance_response(portfolio: Portfolio) -> dict[str, Any]:
             "series": [
                 {
                     "name": "Market Value",
-                    "data": [
-                        [_ts(v.date), round(v.value, 2)]
-                        for v in total_stock.values
-                    ],
+                    "data": [[_ts(v.date), round(v.value, 2)] for v in total_stock.values],
                 },
                 {
                     "name": "Cost Basis",
-                    "data": [
-                        [_ts(v.date), round(v.cost_basis, 2)]
-                        for v in total_stock.values
-                    ],
+                    "data": [[_ts(v.date), round(v.cost_basis, 2)] for v in total_stock.values],
                 },
             ]
         }
@@ -233,24 +201,15 @@ def _build_performance_response(portfolio: Portfolio) -> dict[str, Any]:
             "series": [
                 {
                     "name": "Unrealized P&L",
-                    "data": [
-                        [_ts(v.date), round(v.unrealized_pnl, 2)]
-                        for v in total_stock.values
-                    ],
+                    "data": [[_ts(v.date), round(v.unrealized_pnl, 2)] for v in total_stock.values],
                 },
                 {
                     "name": "Realized P&L",
-                    "data": [
-                        [_ts(v.date), round(v.realized_pnl, 2)]
-                        for v in total_stock.values
-                    ],
+                    "data": [[_ts(v.date), round(v.realized_pnl, 2)] for v in total_stock.values],
                 },
                 {
                     "name": "Total P&L",
-                    "data": [
-                        [_ts(v.date), round(v.total_pnl, 2)]
-                        for v in total_stock.values
-                    ],
+                    "data": [[_ts(v.date), round(v.total_pnl, 2)] for v in total_stock.values],
                 },
             ]
         }
@@ -261,11 +220,7 @@ def _build_performance_response(portfolio: Portfolio) -> dict[str, Any]:
         if not stock.values:
             continue
         latest = stock.values[-1]
-        return_pct = (
-            (latest.total_pnl / latest.cost_basis * 100)
-            if latest.cost_basis > 0
-            else 0.0
-        )
+        return_pct = (latest.total_pnl / latest.cost_basis * 100) if latest.cost_basis > 0 else 0.0
         stock_performance.append(
             {
                 "symbol": stock.symbol,
@@ -295,12 +250,8 @@ def _build_performance_response(portfolio: Portfolio) -> dict[str, Any]:
     per_stock_series: dict[str, dict[str, list]] = {}
     for stock in individual_stocks:
         per_stock_series[stock.symbol] = {
-            "market_value": [
-                [_ts(v.date), round(v.value, 2)] for v in stock.values
-            ],
-            "cost_basis": [
-                [_ts(v.date), round(v.cost_basis, 2)] for v in stock.values
-            ],
+            "market_value": [[_ts(v.date), round(v.value, 2)] for v in stock.values],
+            "cost_basis": [[_ts(v.date), round(v.cost_basis, 2)] for v in stock.values],
         }
 
     # Chart 6: Monthly returns

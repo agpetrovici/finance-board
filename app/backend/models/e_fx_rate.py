@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from .db import Base
 from sqlalchemy.orm import Session
 
+
 class FxRateDaily(Base):
     __tablename__ = "e_fx_rate_daily"
     __table_args__ = (PrimaryKeyConstraint("currency_pair", "date"),)

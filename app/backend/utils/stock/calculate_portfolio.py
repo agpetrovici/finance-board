@@ -78,20 +78,14 @@ def calculate_portfolio(
     for tx in transactions:
         if tx.fk_symbol is None:
             continue
-        d = (
-            tx.execution_date.date()
-            if isinstance(tx.execution_date, datetime.datetime)
-            else tx.execution_date
-        )
+        d = tx.execution_date.date() if isinstance(tx.execution_date, datetime.datetime) else tx.execution_date
         all_dates.add(d)
 
     sorted_dates = sorted(all_dates)
 
     # -- 2. Build per-symbol transaction list --------------------------------
     # {symbol: {date: [(order_class, quantity, total_user_value), ...]}}
-    tx_by_symbol: dict[str, dict[datetime.date, list[tuple[int, int, float]]]] = (
-        defaultdict(lambda: defaultdict(list))
-    )
+    tx_by_symbol: dict[str, dict[datetime.date, list[tuple[int, int, float]]]] = defaultdict(lambda: defaultdict(list))
 
     gross_invested = 0.0  # Sum of all buy amounts
     gross_cash_returned = 0.0  # Sum of all sell amounts
@@ -102,11 +96,7 @@ def calculate_portfolio(
             continue
         if symbol not in price_lookup:
             continue
-        d = (
-            tx.execution_date.date()
-            if isinstance(tx.execution_date, datetime.datetime)
-            else tx.execution_date
-        )
+        d = tx.execution_date.date() if isinstance(tx.execution_date, datetime.datetime) else tx.execution_date
         total_val = float(tx.value_broker)
         if fx_rates:
             total_val = _to_usd(total_val, tx.value_broker_currency, d, fx_rates)
@@ -146,11 +136,7 @@ def calculate_portfolio(
                         running_cost_basis += cash_amount
                         running_qty += qty_signed
                     elif order_class == ORDER_CLASS_SELL:
-                        avg_cost = (
-                            running_cost_basis / running_qty
-                            if running_qty > 0
-                            else 0.0
-                        )
+                        avg_cost = running_cost_basis / running_qty if running_qty > 0 else 0.0
                         cost_of_sold = qty_signed * avg_cost
                         # Proceeds (cash received) minus cost = realized P&L
                         cumulative_realized_pnl += cash_amount - cost_of_sold
@@ -204,9 +190,7 @@ def calculate_portfolio(
     # -- 4. Compute "Total" synthetic series ---------------------------------
     stock_value_by_date: dict[str, dict[datetime.date, StockValue]] = {}
     for stock in stocks:
-        stock_value_by_date[stock.symbol] = {
-            v.date.date(): v for v in stock.values
-        }
+        stock_value_by_date[stock.symbol] = {v.date.date(): v for v in stock.values}
 
     def _value_for_date(symbol: str, d: datetime.date) -> StockValue | None:
         """Return the StockValue for date d, or the most recent prior value.
@@ -244,11 +228,7 @@ def calculate_portfolio(
                     cost_basis=total_cost,
                     avg_cost_per_share=0.0,
                     unrealized_pnl=total_unrealized,
-                    unrealized_pnl_pct=(
-                        (total_unrealized / total_cost * 100)
-                        if total_cost > 0
-                        else 0.0
-                    ),
+                    unrealized_pnl_pct=((total_unrealized / total_cost * 100) if total_cost > 0 else 0.0),
                     realized_pnl=total_realized,
                     total_pnl=t_pnl,
                 )
@@ -273,9 +253,7 @@ def calculate_portfolio(
     total_realized_pnl = latest_total.realized_pnl if latest_total else 0.0
     total_return = latest_total.total_pnl if latest_total else 0.0
     net_invested = gross_invested - gross_cash_returned
-    total_return_pct = (
-        (total_return / net_invested * 100) if net_invested > 0 else 0.0
-    )
+    total_return_pct = (total_return / net_invested * 100) if net_invested > 0 else 0.0
 
     return Portfolio(
         stocks=stocks,

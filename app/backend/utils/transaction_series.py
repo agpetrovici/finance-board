@@ -308,11 +308,7 @@ def get_income_expenses_statements(session: Session) -> List[IncomeAndExpensesSt
     A category is classified as *income* when the sum of its subcategory
     amounts for that month is positive, and *expense* otherwise.
     """
-    transactions = (
-        session.query(FiatTransaction)
-        .filter(FiatTransaction.date >= datetime.now().replace(year=datetime.now().year - 1))
-        .all()
-    )
+    transactions = session.query(FiatTransaction).filter(FiatTransaction.date >= datetime.now().replace(year=datetime.now().year - 1)).all()
     if not transactions:
         return []
 
@@ -333,10 +329,7 @@ def get_income_expenses_statements(session: Session) -> List[IncomeAndExpensesSt
 
         for cat_name, subcats in sorted(monthly_data[month_str].items()):
             cat_total = sum(subcats.values())
-            subcategories = [
-                IncExpSubcategory(name=sub_name, amount=round(amount, 2))
-                for sub_name, amount in sorted(subcats.items())
-            ]
+            subcategories = [IncExpSubcategory(name=sub_name, amount=round(amount, 2)) for sub_name, amount in sorted(subcats.items())]
             cat = IncExpCategory(name=cat_name, subcategories=subcategories)
 
             if cat_total > 0:
@@ -344,10 +337,12 @@ def get_income_expenses_statements(session: Session) -> List[IncomeAndExpensesSt
             else:
                 expenses.append(cat)
 
-        statements.append(IncomeAndExpensesStatement(
-            month=datetime.strptime(month_str, "%Y-%m-%d").date(),
-            incomes=incomes,
-            expenses=expenses,
-        ))
+        statements.append(
+            IncomeAndExpensesStatement(
+                month=datetime.strptime(month_str, "%Y-%m-%d").date(),
+                incomes=incomes,
+                expenses=expenses,
+            )
+        )
 
     return statements
