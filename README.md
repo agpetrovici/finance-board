@@ -83,3 +83,9 @@ pg_dump \
   --file=dump-finance_board-$(date +%Y%m%d_%H%M%S).sql \
   finance_board
 ```
+
+## Security
+
+```shell
+poetry run pip-audit
+```
