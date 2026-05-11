@@ -132,6 +132,36 @@ class StockApi(BaseModel):
 
         return output
 
+    def get_earliest_timestamp(
+        self,
+        symbol: str,
+        interval: IntervalTwelveData = IntervalTwelveData.DAILY,
+        isin: Optional[str] = None,
+        exchange: Optional[str] = None,
+        timezone: Optional[str] = None,
+    ) -> datetime:
+        """
+        Return the earliest available datetime for the given instrument and interval.
+
+        Documentation: https://twelvedata.com/docs/discovery/earliest-timestamp
+        """
+        resolved_isin = (isin.strip() if isin else None) or StockPriceDaily.isin_for_symbol(symbol)
+        kwargs: dict = {"interval": interval}
+        if resolved_isin:
+            kwargs["isin"] = resolved_isin
+        else:
+            kwargs["symbol"] = symbol
+        if exchange:
+            kwargs["exchange"] = exchange
+        if timezone:
+            kwargs["timezone"] = timezone
+
+        result = self.api_client.get_earliest_timestamp(**kwargs).as_json()
+
+        raw = result["datetime"]
+        fmt = "%Y-%m-%d %H:%M:%S" if " " in raw else "%Y-%m-%d"
+        return datetime.strptime(raw, fmt)
+
     def get_fx_prices(
         self,
         symbol: str,
