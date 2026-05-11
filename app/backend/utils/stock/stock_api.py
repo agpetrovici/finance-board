@@ -38,20 +38,30 @@ class StockApi(BaseModel):
         start_date: Optional[datetime.datetime] = None,
         end_date: Optional[datetime.datetime] = None,
         timezone: Optional[str] = "America/New_York",
+        isin: Optional[str] = None,
     ) -> Sequence[StockPriceDaily]:
         """
         Documentation: https://github.com/twelvedata/twelvedata-python?tab=readme-ov-file#Time-series
+        When ``isin`` is omitted, an ISIN is resolved from ``e_stock_symbol`` when present; Twelve Data is
+        then queried by ISIN so the correct listing is used. Rows still use ``symbol`` as ``fk_symbol``.
         """
 
-        # Construct the time series
-        ts = self.api_client.time_series(
-            symbol=symbol,
-            interval=interval,
-            outputsize=outputsize,
-            start_date=start_date.strftime("%Y-%m-%d") if start_date else None,
-            end_date=end_date.strftime("%Y-%m-%d") if end_date else None,
-            timezone=timezone,
-        )
+        resolved_isin = (isin.strip() if isin else None) or StockPriceDaily.isin_for_symbol(symbol)
+        ts_kwargs: dict = {
+            "interval": interval,
+            "outputsize": outputsize,
+            "start_date": start_date.strftime("%Y-%m-%d") if start_date else None,
+            "end_date": end_date.strftime("%Y-%m-%d") if end_date else None,
+            "timezone": timezone,
+        }
+        if resolved_isin:
+            ts_kwargs["symbol"] = None
+            ts_kwargs["isin"] = resolved_isin
+        else:
+            ts_kwargs["symbol"] = symbol
+            ts_kwargs["isin"] = None
+
+        ts = self.api_client.time_series(**ts_kwargs)
         data = ts.as_csv()
 
         output = []

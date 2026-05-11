@@ -1,10 +1,11 @@
 import datetime
-from typing import cast
+from typing import Optional, cast
 
 from sqlalchemy import BigInteger, DateTime, ForeignKey, PrimaryKeyConstraint, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.backend.models.db import Base, get_session
+from app.backend.models.stock.e_stock_symbol import StockSymbol
 
 
 class StockPriceDaily(Base):
@@ -20,6 +21,15 @@ class StockPriceDaily(Base):
     close: Mapped[float]
 
     volume: Mapped[int] = mapped_column(BigInteger)
+
+    @staticmethod
+    def isin_for_symbol(symbol: str) -> Optional[str]:
+
+        with get_session() as session:
+            row = session.query(StockSymbol).filter_by(pk_symbol=symbol).one_or_none()
+            if row is None or not row.fk_isin:
+                return None
+            return row.fk_isin
 
     @staticmethod
     def get_prices(

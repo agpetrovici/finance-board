@@ -14,10 +14,15 @@ if __name__ == "__main__":
     for ix, symbol in enumerate(symbols):
         # Get start date based on this symbol from StockPriceDaily
         stock_price = StockPriceDaily.get_last_price(symbol)
-        if not stock_price:
-            print(f"{ix} {symbol} has no prices")
-            continue
-        start_date:datetime.date = stock_price.date.date()
+        if stock_price:
+            start_date: datetime.date = stock_price.date.date()
+        else:
+            # Get the start_date from the first StockTransaction for this symbol
+            stock_transaction = StockTransaction.get_first_transaction(symbol)
+            if not stock_transaction:
+                print(f"{ix} {symbol} has no transactions")
+                continue
+            start_date = stock_transaction.execution_date.date()
 
         get_prices(
             symbol=symbol,

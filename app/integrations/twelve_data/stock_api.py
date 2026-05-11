@@ -42,20 +42,28 @@ class StockApi(BaseModel):
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         timezone: Optional[str] = "America/New_York",
+        isin: Optional[str] = None,
     ) -> Sequence[StockPrice15min]:
         """
         Documentation: https://github.com/twelvedata/twelvedata-python?tab=readme-ov-file#Time-series
         """
 
-        # Construct the time series
-        ts = self.api_client.time_series(
-            symbol=symbol,
-            interval=interval,
-            outputsize=outputsize,
-            start_date=start_date.strftime("%Y-%m-%d") if start_date else None,
-            end_date=end_date.strftime("%Y-%m-%d") if end_date else None,
-            timezone=timezone,
-        )
+        resolved_isin = (isin.strip() if isin else None) or StockPriceDaily.isin_for_symbol(symbol)
+        ts_kwargs: dict = {
+            "interval": interval,
+            "outputsize": outputsize,
+            "start_date": start_date.strftime("%Y-%m-%d") if start_date else None,
+            "end_date": end_date.strftime("%Y-%m-%d") if end_date else None,
+            "timezone": timezone,
+        }
+        if resolved_isin:
+            ts_kwargs["symbol"] = None
+            ts_kwargs["isin"] = resolved_isin
+        else:
+            ts_kwargs["symbol"] = symbol
+            ts_kwargs["isin"] = None
+
+        ts = self.api_client.time_series(**ts_kwargs)
         try:
             data = ts.as_csv()
         except TwelveDataError as e:
@@ -91,20 +99,30 @@ class StockApi(BaseModel):
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         timezone: Optional[str] = "America/New_York",
+        isin: Optional[str] = None,
     ) -> Sequence[StockPriceDaily]:
         """
         Documentation: https://github.com/twelvedata/twelvedata-python?tab=readme-ov-file#Time-series
+        When ``isin`` is omitted, an ISIN is resolved from ``e_stock_symbol`` when present; Twelve Data is
+        then queried by ISIN. Rows still use ``symbol`` as ``fk_symbol``.
         """
 
-        # Construct the time series
-        ts = self.api_client.time_series(
-            symbol=symbol,
-            interval=interval,
-            outputsize=outputsize,
-            start_date=start_date.strftime("%Y-%m-%d") if start_date else None,
-            end_date=end_date.strftime("%Y-%m-%d") if end_date else None,
-            timezone=timezone,
-        )
+        resolved_isin = (isin.strip() if isin else None) or StockPriceDaily.isin_for_symbol(symbol)
+        ts_kwargs: dict = {
+            "interval": interval,
+            "outputsize": outputsize,
+            "start_date": start_date.strftime("%Y-%m-%d") if start_date else None,
+            "end_date": end_date.strftime("%Y-%m-%d") if end_date else None,
+            "timezone": timezone,
+        }
+        if resolved_isin:
+            ts_kwargs["symbol"] = None
+            ts_kwargs["isin"] = resolved_isin
+        else:
+            ts_kwargs["symbol"] = symbol
+            ts_kwargs["isin"] = None
+
+        ts = self.api_client.time_series(**ts_kwargs)
         try:
             data = ts.as_csv()
         except TwelveDataError as e:
@@ -113,6 +131,25 @@ class StockApi(BaseModel):
                 time.sleep(65)
                 data = ts.as_csv()
                 print("Done sleeping")
+            elif "This symbol is available starting with the Pro or Venture plan." in str(e):
+                try:
+                    # Try again with symbol instead of isin
+                    ts_kwargs["symbol"] = symbol
+                    ts_kwargs["isin"] = None
+                    ts = self.api_client.time_series(**ts_kwargs)
+                    data = ts.as_csv()
+                except Exception as e:
+                    raise e
+            elif "No data is available on the specified dates. Try setting different start/end dates." in str(e):
+                earliest_timestamp = self.get_earliest_timestamp(symbol, interval, isin, timezone=timezone)
+                if earliest_timestamp:
+                    start_date = earliest_timestamp
+                    ts_kwargs["start_date"] = start_date.strftime("%Y-%m-%d")
+                    ts = self.api_client.time_series(**ts_kwargs)
+                    data = ts.as_csv()
+                else:
+                    raise e
+                pass
             else:
                 raise e
 

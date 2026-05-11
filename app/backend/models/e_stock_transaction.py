@@ -1,8 +1,10 @@
+from typing import cast
+import datetime
 from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.backend.models.db import Base
-from app.backend.models.db import SessionLocal
+from app.backend.models.db import Base, SessionLocal
+
 
 class StockTransaction(Base):
     __tablename__ = "e_stock_transaction"
@@ -11,7 +13,7 @@ class StockTransaction(Base):
     fk_stock_account: Mapped[int] = mapped_column(Integer, ForeignKey("m_stock_account.pk_stock_account"), nullable=False)
 
     order_id: Mapped[str] = mapped_column(String(100), nullable=False)  # id stored by the broker
-    execution_date: Mapped[str] = mapped_column(DateTime, nullable=False)
+    execution_date: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=False)
     fk_isin: Mapped[str] = mapped_column(String(12), ForeignKey("m_isin.pk_isin"), nullable=False)
     fk_symbol: Mapped[str] = mapped_column(String(10), ForeignKey("e_stock_symbol.pk_symbol"), nullable=False)
     fk_order_type: Mapped[int] = mapped_column(Integer, ForeignKey("m_order_type.pk_order_type"), nullable=False)
@@ -48,6 +50,11 @@ class StockTransaction(Base):
     def get_distinct_symbols(cls) -> list[str]:
         with SessionLocal() as session:
             return [row[0] for row in session.query(cls.fk_symbol).distinct().all()]
+
+    @classmethod
+    def get_first_transaction(cls, symbol: str) -> "StockTransaction":
+        with SessionLocal() as session:
+            return cast(StockTransaction, session.query(cls).filter(cls.fk_symbol == symbol).order_by(cls.execution_date.asc()).first())
 
     def __repr__(self) -> str:
         return f"<StockTransaction {self.execution_date} {self.quantity} {self.fk_symbol} {self.total_user_currency}>"
