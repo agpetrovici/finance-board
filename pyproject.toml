@@ -17,9 +17,9 @@ python-binance = "^1.0.27"  # external dependency to connect to binance
 orjson = "^3.10.14"  # used by python-binance even if is not a direct dependency
 
 # web server
-fastapi = "^0.128.4"
+fastapi = "^0.136.1"
 uvicorn = {extras = ["standard"], version = "^0.40.0"}
-python-multipart = "^0.0.22"
+python-multipart = "^0.0.28"
 jinja2 = "^3.1.5"
 
 # database
