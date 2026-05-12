@@ -16,7 +16,7 @@ def get_prices(
 ) -> None:
 
     if isinstance(start_date, datetime.date):
-        start_date_adj = datetime.datetime(year=start_date.year, month=start_date.month, day=start_date.day)
+        start_date_adj = datetime.datetime(year=start_date.year, month=start_date.month, day=start_date.day)-datetime.timedelta(days=5)
     else:
         start_date_adj = start_date
     if isinstance(end_date, datetime.date):
