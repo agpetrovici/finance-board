@@ -52,7 +52,7 @@ async def process_pdf(pdf_file: UploadFile, session: Session) -> StockTransactio
     match order_class_str:
         case "Comprar":
             fk_order_class = 1  # BUY
-        case "Venta":
+        case "Venta" | "Vender":
             fk_order_class = 2  # SELL
 
     stock_account = session.query(StockAccount).filter_by(iban=iban).first()
