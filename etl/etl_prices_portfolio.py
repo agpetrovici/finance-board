@@ -5,8 +5,8 @@ from etl.get_prices import get_prices
 from app.backend.models.stock.e_stock_price import StockPriceDaily
 from app.backend.models.e_stock_transaction import StockTransaction
 
-if __name__ == "__main__":
-    # Get all transacted symbols
+
+def run() -> None:
     symbols = StockTransaction.get_distinct_symbols()
 
     end_date = datetime.datetime.now().date()
@@ -33,3 +33,7 @@ if __name__ == "__main__":
         )
         print(f"{ix} done {symbol}")
     print("done")
+
+
+if __name__ == "__main__":
+    run()

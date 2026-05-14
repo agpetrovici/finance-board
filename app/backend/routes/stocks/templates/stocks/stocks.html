@@ -7,6 +7,15 @@
 {% block content %}
 <div class="container-fluid mt-4">
 
+    <!-- Toolbar -->
+    <div class="d-flex justify-content-end align-items-center mb-3">
+        <span id="update-status" class="text-muted small me-3"></span>
+        <button id="btn-update-prices" class="btn btn-sm btn-outline-primary">
+            <span id="btn-update-spinner" class="spinner-border spinner-border-sm me-1 d-none" role="status"></span>
+            Update Prices
+        </button>
+    </div>
+
     <!-- KPI Summary Cards -->
     <div class="row mb-4">
         <div class="col-3">
@@ -116,4 +125,30 @@
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 <script src="{{ url_for('stocks_static', path='stocks/js/portfolio-charts.js') }}"></script>
+<script>
+function handleUpdatePrices() {
+    const btn = document.getElementById('btn-update-prices');
+    const spinner = document.getElementById('btn-update-spinner');
+    const status = document.getElementById('update-status');
+
+    btn.disabled = true;
+    spinner.classList.remove('d-none');
+    status.textContent = 'Updating…';
+    status.className = 'text-muted small me-3';
+
+    fetch('/stocks/update-prices', { method: 'POST' })
+        .then(function (res) { return res.json(); })
+        .then(function () {
+            window.location.reload();
+        })
+        .catch(function () {
+            status.textContent = 'Failed to update prices.';
+            status.className = 'text-danger small me-3';
+            btn.disabled = false;
+            spinner.classList.add('d-none');
+        });
+}
+
+document.getElementById('btn-update-prices').addEventListener('click', handleUpdatePrices);
+</script>
 {% endblock %}
