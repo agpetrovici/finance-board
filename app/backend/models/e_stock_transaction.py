@@ -1,6 +1,6 @@
 from typing import cast
 import datetime
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, case, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.backend.models.db import Base, SessionLocal
@@ -50,6 +50,21 @@ class StockTransaction(Base):
     def get_distinct_symbols(cls) -> list[str]:
         with SessionLocal() as session:
             return [row[0] for row in session.query(cls.fk_symbol).distinct().all()]
+
+    @classmethod
+    def get_distinct_symbols_in_portfolio(cls) -> list[str]:
+        signed_qty = case(
+            (cls.fk_order_class == 1, cls.quantity),
+            else_=-cls.quantity,
+        )
+        with SessionLocal() as session:
+            rows = (
+                session.query(cls.fk_symbol)
+                .group_by(cls.fk_symbol)
+                .having(func.sum(signed_qty) > 0)
+                .all()
+            )
+            return [row[0] for row in rows]
 
     @classmethod
     def get_first_transaction(cls, symbol: str) -> "StockTransaction":

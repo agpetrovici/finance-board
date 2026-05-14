@@ -7,7 +7,7 @@ from app.backend.models.e_stock_transaction import StockTransaction
 
 
 def run() -> None:
-    symbols = StockTransaction.get_distinct_symbols()
+    symbols = StockTransaction.get_distinct_symbols_in_portfolio()
 
     end_date = datetime.datetime.now().date()
     end_date += datetime.timedelta(days=1)
