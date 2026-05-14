@@ -23,12 +23,6 @@
 <body>
     <div id="liveAlertPlaceholder" style="position: fixed; top: 0; left: 0; right: 0; z-index: 1050;"></div>
     <main class="d-flex flex-nowrap">
-        <!-- Hamburger Menu Button (visible only on mobile) -->
-        <button class="btn btn-primary d-md-none position-fixed top-0 start-0 m-2" type="button"
-            data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">
-            <i class="bi bi-list"></i>
-        </button>
-
         <!-- Sidebar -->
         <div class="offcanvas-md offcanvas-start" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
             <div class="offcanvas-header d-md-none">
@@ -114,9 +108,13 @@
         </div>
 
         <div class="dashboard flex-grow-1 p-3 overflow-auto">
-            <div class="container-fluid mt-4">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
+            <div class="container-fluid mt-2">
+                <nav aria-label="breadcrumb" class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-outline-secondary d-md-none" type="button"
+                        data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <ol class="breadcrumb mb-0">
                         {% if request.path.endswith('/') %}
                         {% set path = request.path[:-1] %}
                         {% else %}
