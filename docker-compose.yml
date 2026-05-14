@@ -41,6 +41,7 @@ services:
       # without rebuilding the image (only rebuild if pyproject.toml changes).
       - ./main.py:/app/main.py:ro
       - ./app:/app/app:ro
+      - ./etl:/app/etl:ro
     depends_on:
       postgres:
         condition: service_healthy
