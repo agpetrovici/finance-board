@@ -42,6 +42,7 @@ services:
       - ./main.py:/app/main.py:ro
       - ./app:/app/app:ro
       - ./etl:/app/etl:ro
+      - ./logs:/app/logs
     depends_on:
       postgres:
         condition: service_healthy

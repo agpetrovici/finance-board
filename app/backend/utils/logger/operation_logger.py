@@ -1,8 +1,9 @@
 import logging
-import os
 from logging.handlers import TimedRotatingFileHandler
+from pathlib import Path
 
-LOGS_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "..", "logs", "operations")
+# parents[4]: logger/ -> utils/ -> backend/ -> app/ -> <project-root>
+LOGS_DIR = Path(__file__).resolve().parents[4] / "logs" / "operations"
 
 _LOG_FORMAT = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
 _DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -24,7 +25,7 @@ def get_logger(
     if name in _loggers:
         return _loggers[name]
 
-    os.makedirs(LOGS_DIR, exist_ok=True)
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
@@ -32,7 +33,7 @@ def get_logger(
 
     formatter = logging.Formatter(_LOG_FORMAT, datefmt=_DATE_FORMAT)
 
-    log_path = os.path.join(LOGS_DIR, f"{name}.log")
+    log_path = LOGS_DIR / f"{name}.log"
     file_handler = TimedRotatingFileHandler(
         log_path,
         when="midnight",
