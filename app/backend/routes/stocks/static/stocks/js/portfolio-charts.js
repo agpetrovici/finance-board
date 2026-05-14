@@ -1,6 +1,10 @@
 const fmt = (v) => "$" + v.toFixed(2);
 const fmtPct = (v) => v.toFixed(2) + "%";
 
+function chartHeight(tall = 380, short = 260) {
+  return window.innerWidth < 768 ? short : tall;
+}
+
 const LW = LightweightCharts;
 
 document.addEventListener("DOMContentLoaded", initPortfolioCharts);
@@ -41,7 +45,7 @@ function toPoints(data) {
   });
 }
 
-function lwChartBase(containerId, height = 380) {
+function lwChartBase(containerId, height = chartHeight()) {
   const container = document.getElementById(containerId);
   container.style.height = height + "px";
 
@@ -182,7 +186,7 @@ function renderStockPerformanceBars(data) {
 
   const options = {
     series: [{ name: "Return %", data: values }],
-    chart: { type: "bar", height: 30 * categories.length + 80 },
+    chart: { type: "bar", height: chartHeight(30 * categories.length + 80, 20 * categories.length + 60) },
     plotOptions: {
       bar: { horizontal: true, barHeight: "60%", distributed: true },
     },
@@ -226,7 +230,7 @@ function renderAllocationDonut(data) {
 
   const options = {
     series: series,
-    chart: { type: "donut", height: 380 },
+    chart: { type: "donut", height: chartHeight() },
     labels: labels,
     dataLabels: {
       enabled: true,
@@ -323,7 +327,7 @@ function renderMonthlyReturnsChart(data) {
 
   const options = {
     series: [{ name: "Monthly Return", data: data.values }],
-    chart: { type: "bar", height: 380 },
+    chart: { type: "bar", height: chartHeight() },
     plotOptions: { bar: { distributed: true, columnWidth: "70%" } },
     colors: colors,
     dataLabels: { enabled: false },

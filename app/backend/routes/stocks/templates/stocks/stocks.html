@@ -8,7 +8,7 @@
 <div class="container-fluid mt-4">
 
     <!-- Toolbar -->
-    <div class="d-flex justify-content-end align-items-center mb-3">
+    <div class="d-flex justify-content-end align-items-center mb-3 mt-4 mt-md-0">
         <span id="update-status" class="text-muted small me-3"></span>
         <button id="btn-update-prices" class="btn btn-sm btn-outline-primary">
             <span id="btn-update-spinner" class="spinner-border spinner-border-sm me-1 d-none" role="status"></span>
@@ -17,8 +17,8 @@
     </div>
 
     <!-- KPI Summary Cards -->
-    <div class="row mb-4">
-        <div class="col-3">
+    <div class="row mb-4 g-3">
+        <div class="col-6 col-sm-3">
             <div class="card">
                 <div class="card-body text-center">
                     <h6 class="card-subtitle text-muted">Total Invested</h6>
@@ -26,7 +26,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-3">
+        <div class="col-6 col-sm-3">
             <div class="card">
                 <div class="card-body text-center">
                     <h6 class="card-subtitle text-muted">Market Value</h6>
@@ -34,7 +34,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-3">
+        <div class="col-6 col-sm-3">
             <div class="card">
                 <div class="card-body text-center">
                     <h6 class="card-subtitle text-muted">Total Return</h6>
@@ -42,7 +42,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-3">
+        <div class="col-6 col-sm-3">
             <div class="card">
                 <div class="card-body text-center">
                     <h6 class="card-subtitle text-muted">Return %</h6>
@@ -53,17 +53,17 @@
     </div>
 
     <!-- Row 1: Value vs Cost Basis + Allocation Donut -->
-    <div class="row">
-        <div class="col-8">
-            <div class="card h-100">
+    <div class="row g-3">
+        <div class="col-12 col-md-8">
+            <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Portfolio Value vs Cost Basis</h5>
-                    <div id="chart-value-vs-cost" style="height:380px;"></div>
+                    <div id="chart-value-vs-cost"></div>
                 </div>
             </div>
         </div>
-        <div class="col-4">
-            <div class="card h-100">
+        <div class="col-12 col-md-4">
+            <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Portfolio Allocation</h5>
                     <div id="chart-allocation"></div>
@@ -72,18 +72,18 @@
         </div>
     </div>
 
-    <!-- Row 2: Cumulative P&L + Per-Stock Return -->
-    <div class="row mt-4">
-        <div class="col-8">
-            <div class="card h-100">
+    <!-- Row 2: Cumulative P&L + Monthly Returns -->
+    <div class="row mt-4 g-3">
+        <div class="col-12 col-md-8">
+            <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Cumulative P&amp;L</h5>
-                    <div id="chart-pnl" style="height:380px;"></div>
+                    <div id="chart-pnl"></div>
                 </div>
             </div>
         </div>
-        <div class="col-4">
-            <div class="card h-100">
+        <div class="col-12 col-md-4">
+            <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Monthly Returns</h5>
                     <div id="chart-monthly-returns"></div>
@@ -92,21 +92,21 @@
         </div>
     </div>
 
-    <!-- Row 3: Stock Detail + Monthly Returns -->
-    <div class="row mt-4">
-        <div class="col-8">
-            <div class="card h-100">
+    <!-- Row 3: Stock Detail + Per-Stock Return -->
+    <div class="row mt-4 g-3">
+        <div class="col-12 col-md-8">
+            <div class="card">
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <h5 class="card-title mb-0">Stock Detail</h5>
                         <select id="stock-select" class="form-select" style="max-width: 200px;"></select>
                     </div>
-                    <div id="chart-stock-detail" style="height:380px;"></div>
+                    <div id="chart-stock-detail"></div>
                 </div>
             </div>
         </div>
-        <div class="col-4">
-            <div class="card h-100">
+        <div class="col-12 col-md-4">
+            <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Per-Stock Return %</h5>
                     <div id="chart-stock-performance"></div>

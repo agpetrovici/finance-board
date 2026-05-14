@@ -66,3 +66,9 @@ main {
 .scrollarea {
     overflow-y: auto;
 }
+
+@media (max-width: 767.98px) {
+    .dashboard {
+        padding-top: 3.5rem;
+    }
+}
