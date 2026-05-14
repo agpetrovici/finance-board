@@ -174,6 +174,7 @@ def _empty_performance_response() -> dict[str, Any]:
 def _build_performance_response(portfolio: Portfolio) -> dict[str, Any]:
     total_stock = next((s for s in portfolio.stocks if s.symbol == "Total"), None)
     individual_stocks = [s for s in portfolio.stocks if s.symbol != "Total"]
+    active_stocks = [s for s in individual_stocks if s.values and s.values[-1].quantity > 0]
 
     def _ts(dt: Any) -> int:
         return int(dt.timestamp() * 1000)
@@ -216,7 +217,7 @@ def _build_performance_response(portfolio: Portfolio) -> dict[str, Any]:
 
     # Chart 3: Per-stock performance
     stock_performance: list[dict[str, Any]] = []
-    for stock in individual_stocks:
+    for stock in active_stocks:
         if not stock.values:
             continue
         latest = stock.values[-1]
@@ -248,7 +249,7 @@ def _build_performance_response(portfolio: Portfolio) -> dict[str, Any]:
 
     # Chart 5: Per-stock series
     per_stock_series: dict[str, dict[str, list]] = {}
-    for stock in individual_stocks:
+    for stock in active_stocks:
         per_stock_series[stock.symbol] = {
             "market_value": [[_ts(v.date), round(v.value, 2)] for v in stock.values],
             "cost_basis": [[_ts(v.date), round(v.cost_basis, 2)] for v in stock.values],
