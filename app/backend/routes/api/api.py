@@ -39,7 +39,7 @@ def test_get_transaction_by_day() -> dict[str, Any]:
 
 
 @router.post("/get-stock-statement")
-def get_stock_transactions(session: Session = Depends(get_db)) -> dict[str, Any]:
+def get_stock_statement(session: Session = Depends(get_db)) -> dict[str, Any]:
     output = get_stock_transaction_series(session)
     return output.to_dict()
 

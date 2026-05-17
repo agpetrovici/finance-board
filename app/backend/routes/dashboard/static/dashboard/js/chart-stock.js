@@ -20,6 +20,16 @@ async function initStockChart() {
     "#column-chart-stock",
     STOCK_CHART_COLORS,
     {
+      xaxis: {
+        type: "category",
+        categories: data.categories,
+        labels: {
+          formatter: (value) => {
+            const d = new Date(value);
+            return d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+          },
+        },
+      },
       yaxis: {
         labels: {
           formatter: (value) => Math.round(value),

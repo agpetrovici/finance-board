@@ -262,7 +262,7 @@ def get_stock_transaction_series(session: Session) -> ApexColumnChartData:
     series: List[Category] = []
     dates: List[str] = []
 
-    stock_transactions = session.query(StockTransaction).filter(StockTransaction.execution_date >= datetime.now().replace(year=datetime.now().year - 1)).all()
+    stock_transactions = session.query(StockTransaction).filter(StockTransaction.execution_date >= datetime(datetime.now().year - 1, 1, 1)).all()
     if not stock_transactions:
         return ApexColumnChartData(series, dates)
 
@@ -271,19 +271,20 @@ def get_stock_transaction_series(session: Session) -> ApexColumnChartData:
 
     transaction_dates: Set[datetime] = set()
     for t in stock_transactions:
-        date_str = t.execution_date.replace(day=1).strftime("%Y-%m-%d")
+        month_start = t.execution_date.date().replace(day=1)
+        date_str = month_start.strftime("%Y-%m-%d")
         subcategory = t.fk_isin
         subcategories_set.add(subcategory)
-        transaction_dates.add(t.execution_date.replace(day=1))
+        transaction_dates.add(month_start)
         transaction_groups.setdefault(date_str, {}).setdefault(subcategory, []).append(t)
 
     isins_by_pk = {i.pk_isin: i for i in session.query(Isin).filter(Isin.pk_isin.in_(subcategories_set)).all()}
 
     subcategories_sorted: List[str] = sorted(subcategories_set)
-    transaction_dates_sorted: List[datetime] = sorted(transaction_dates)
+    transaction_dates_sorted = sorted(transaction_dates)
     min_date = min(transaction_dates_sorted)
     max_date = max(transaction_dates_sorted)
-    dates = [date.strftime("%Y-%m-%d") for date in rrule(MONTHLY, dtstart=min_date, until=max_date)]
+    dates = [d.strftime("%Y-%m-%d") for d in rrule(MONTHLY, dtstart=min_date, until=max_date)]
 
     subcategories_data: List[Subcategory] = []
     for subcategory in subcategories_sorted:
