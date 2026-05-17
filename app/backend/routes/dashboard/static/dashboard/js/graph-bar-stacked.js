@@ -2,7 +2,8 @@ export function graphBarStacked(
   series,
   categories,
   containerId,
-  customColors = null
+  customColors = null,
+  extraOptions = null
 ) {
   // Create container for all charts
   const chartsContainer = document.querySelector(containerId);
@@ -14,10 +15,11 @@ export function graphBarStacked(
     const chartDiv = document.createElement("div");
     chartDiv.id = `stacked-column${index + 1}`;
 
-    // Add category title
-    const categoryTitle = document.createElement("h2");
-    categoryTitle.textContent = seriesGroup.category;
-    chartsContainer.appendChild(categoryTitle);
+    if (seriesGroup.category) {
+      const categoryTitle = document.createElement("h2");
+      categoryTitle.textContent = seriesGroup.category;
+      chartsContainer.appendChild(categoryTitle);
+    }
     chartsContainer.appendChild(chartDiv);
 
     // Generate options for this chart
@@ -83,6 +85,7 @@ export function graphBarStacked(
         type: "datetime",
         categories: categories,
       },
+      ...(extraOptions || {}),
     };
 
     // Create and render the chart

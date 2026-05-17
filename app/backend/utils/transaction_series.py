@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.backend.models.m_isin import Isin
 from app.backend.models.e_stock_transaction import StockTransaction
+from app.backend.utils.stock.calculate_portfolio import ORDER_CLASS_BUY, ORDER_CLASS_SELL
 from app.backend.models.e_transaction import FiatTransaction
 from app.backend.routes.api.apex import (
     ApexColumnChartData,
@@ -239,6 +240,24 @@ def test_get_transaction_series() -> ApexColumnChartData:
     return ApexColumnChartData(series, categories)
 
 
+def _signed_stock_value(t: StockTransaction) -> Decimal:
+    """Transaction value in user currency; BUY positive, SELL negative."""
+    value = abs(Decimal(str(t.value_user)))
+    if t.fk_order_class == ORDER_CLASS_SELL:
+        return -value
+    return value
+
+
+def _stock_tx_tooltip(t: StockTransaction, isin_name: str) -> str:
+    side = "BUY" if t.fk_order_class == ORDER_CLASS_BUY else "SELL"
+    signed_value = _signed_stock_value(t)
+    return (
+        f"{t.execution_date.strftime('%Y-%m-%d')} {side} {isin_name}: "
+        f"{t.quantity} × {t.price_per_share_value} {t.price_per_share_currency} = "
+        f"{signed_value} {t.value_user_currency}"
+    )
+
+
 def get_stock_transaction_series(session: Session) -> ApexColumnChartData:
     series: List[Category] = []
     dates: List[str] = []
@@ -247,57 +266,45 @@ def get_stock_transaction_series(session: Session) -> ApexColumnChartData:
     if not stock_transactions:
         return ApexColumnChartData(series, dates)
 
-    # Group transactions by date and category/subcategory
-    categories_set: Set[str] = set()
     subcategories_set: Set[str] = set()
-    transaction_groups: Dict[str, Dict[str, Dict[str, List[StockTransaction]]]] = {}
+    transaction_groups: Dict[str, Dict[str, List[StockTransaction]]] = {}
 
     transaction_dates: Set[datetime] = set()
     for t in stock_transactions:
         date_str = t.execution_date.replace(day=1).strftime("%Y-%m-%d")
-        category = "stock"
         subcategory = t.fk_isin
-        categories_set.add(category)
         subcategories_set.add(subcategory)
         transaction_dates.add(t.execution_date.replace(day=1))
+        transaction_groups.setdefault(date_str, {}).setdefault(subcategory, []).append(t)
 
-        if date_str not in transaction_groups:
-            transaction_groups[date_str] = {}
+    isins_by_pk = {i.pk_isin: i for i in session.query(Isin).filter(Isin.pk_isin.in_(subcategories_set)).all()}
 
-        if category not in transaction_groups[date_str]:
-            transaction_groups[date_str][category] = {}
-
-        if subcategory not in transaction_groups[date_str][category]:
-            transaction_groups[date_str][category][subcategory] = []
-
-        transaction_groups[date_str][category][subcategory].append(t)
-
-    categories_sorted: List[str] = sorted(list(categories_set))
-    subcategories_sorted: List[str] = sorted(list(subcategories_set))
-    transaction_dates_sorted: List[datetime] = sorted(list(transaction_dates))
+    subcategories_sorted: List[str] = sorted(subcategories_set)
+    transaction_dates_sorted: List[datetime] = sorted(transaction_dates)
     min_date = min(transaction_dates_sorted)
     max_date = max(transaction_dates_sorted)
     dates = [date.strftime("%Y-%m-%d") for date in rrule(MONTHLY, dtstart=min_date, until=max_date)]
 
-    # Create series grouped by category
-    for category in categories_sorted:
-        subcategories_data: List[Subcategory] = []
-        for subcategory in subcategories_sorted:
-            isin = session.get(Isin, subcategory)
-            subcategory_data: List[DataPoint] = []
-            for date in dates:
-                amount = Decimal("0")
-                tooltips = []
-                if date in transaction_groups and category in transaction_groups[date] and subcategory in transaction_groups[date][category]:
-                    transactions = transaction_groups[date][category][subcategory]
-                    amount = sum(t.quantity for t in transactions)
-                    tooltips = [f"{isin.name}: {t.quantity}" for t in transactions]
+    subcategories_data: List[Subcategory] = []
+    for subcategory in subcategories_sorted:
+        isin = isins_by_pk.get(subcategory)
+        isin_name = isin.name if isin else subcategory
+        subcategory_data: List[DataPoint] = []
+        for date in dates:
+            amount = Decimal("0")
+            tooltips: List[str] = []
+            txns = transaction_groups.get(date, {}).get(subcategory, [])
+            if txns:
+                amount = sum(_signed_stock_value(t) for t in txns)
+                tooltips = [_stock_tx_tooltip(t, isin_name) for t in txns]
 
-                subcategory_data.append(DataPoint(x=date, y=amount, tooltip=tooltips))
+            subcategory_data.append(DataPoint(x=date, y=amount, tooltip=tooltips))
 
-            subcategories_data.append(Subcategory(name=isin.name, data=subcategory_data))
+        if any(dp.y != Decimal("0") for dp in subcategory_data):
+            subcategories_data.append(Subcategory(name=isin_name, data=subcategory_data))
 
-        series.append(Category(category=category, data=subcategories_data))
+    if subcategories_data:
+        series.append(Category(category="", data=subcategories_data))
 
     return ApexColumnChartData(series, dates)
 
