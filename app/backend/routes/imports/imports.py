@@ -4,13 +4,15 @@ from decimal import Decimal
 from os import getenv
 from pathlib import Path
 from typing import Any
-from fastapi import APIRouter, Depends, File, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from mindee import ClientV2
 from sqlalchemy.orm import Session
 
 from app.backend.models.db import get_db
+from app.backend.models.e_stock_cash_transfer import StockCashTransfer
+from app.backend.models.e_stock_dividend import StockDividend
 from app.backend.models.e_stock_transaction import StockTransaction
 from app.backend.models.e_transaction import FiatTransaction
 from app.backend.models.m_account import Account
@@ -25,6 +27,7 @@ from app.backend.routes.imports.utils.imagin.process_imagin import process_imagi
 from app.backend.routes.imports.utils.mindee_utils import polygon_to_bbox
 from app.backend.routes.imports.utils.revolut.process_revolut import get_new_movements_revolut
 from app.backend.routes.imports.utils.stock.stock import parse_stock_data
+from app.backend.routes.imports.utils.trade_republic.process_csv import process_trade_republic_csv
 from app.backend.routes.imports.utils.trade_republic.process_pdf import process_pdf
 from app.backend.utils.receipts.prediction import make_receipt_prediction
 from app.backend.utils.receipts.transaction import get_transaction
@@ -423,6 +426,82 @@ async def import_from_degiro(request: Request, session: Session = Depends(get_db
 @router.get("/trade-republic", response_class=HTMLResponse)
 def import_trade_republic(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request, "imports/tpl_trade_republic.html")
+
+
+@router.get("/trade-republic-csv", response_class=HTMLResponse)
+def import_trade_republic_csv(request: Request, session: Session = Depends(get_db)) -> HTMLResponse:
+    accounts_raw = session.query(StockAccount).all()
+    accounts = [{"account_pk": account.pk_stock_account, "name": account.name} for account in accounts_raw]
+    return templates.TemplateResponse(request, "imports/tpl_trade_republic_csv.html", {"accounts": accounts})
+
+
+@router.post("/from-trade-republic-csv")
+async def import_from_trade_republic_csv(
+    file: UploadFile = File(...),
+    account_pk: int = Form(...),
+    session: Session = Depends(get_db),
+) -> dict[str, Any]:
+    stock_account = session.query(StockAccount).filter_by(pk_stock_account=account_pk).first()
+    if stock_account is None:
+        return {"status": "error", "message": "Stock account not found."}
+
+    try:
+        content = await file.read()
+        result = process_trade_republic_csv(session, content, stock_account)
+    except Exception as e:
+        session.rollback()
+        return {"status": "error", "message": f"Could not parse CSV: {str(e)}"}
+
+    if result.total == 0:
+        return {"status": "error", "message": "No processable rows found in the CSV."}
+
+    skipped = 0
+    counts: dict[str, int] = {"trade": 0, "dividend": 0, "transfer": 0}
+
+    try:
+        for record in result.ordered:
+            if isinstance(record, StockTransaction):
+                duplicate = session.query(StockTransaction).filter_by(order_id=record.order_id).first()
+                if duplicate:
+                    skipped += 1
+                    continue
+                session.add(record)
+                counts["trade"] += 1
+
+            elif isinstance(record, StockDividend):
+                duplicate = session.query(StockDividend).filter_by(transaction_id=record.transaction_id).first()
+                if duplicate:
+                    skipped += 1
+                    continue
+                session.add(record)
+                counts["dividend"] += 1
+
+            elif isinstance(record, StockCashTransfer):
+                duplicate = session.query(StockCashTransfer).filter_by(transaction_id=record.transaction_id).first()
+                if duplicate:
+                    skipped += 1
+                    continue
+                session.add(record)
+                counts["transfer"] += 1
+
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        return {"status": "error", "message": f"Database error: {str(e)}"}
+
+    inserted = sum(counts.values())
+    parts = []
+    if counts["trade"]:
+        parts.append(f"{counts['trade']} trade(s)")
+    if counts["dividend"]:
+        parts.append(f"{counts['dividend']} dividend(s)")
+    if counts["transfer"]:
+        parts.append(f"{counts['transfer']} cash transfer(s)")
+
+    msg = f"Imported {inserted} record(s): {', '.join(parts)}."
+    if skipped:
+        msg += f" Skipped {skipped} duplicate(s)."
+    return {"status": "success", "message": msg}
 
 
 @router.post("/from-trade-republic")

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% from "imports/ui_select_account.html" import generate_account_options %}
+
+{% block title %}finance-board | Trade Republic CSV Import{% endblock %}
+
+{% block title_inline %}Trade Republic [csv]{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="mb-3">
+                {{ generate_account_options(accounts) }}
+            </div>
+            <div class="mb-3">
+                <label for="csvFile" class="form-label">Upload CSV file exported from Trade Republic</label>
+                <input type="file" class="form-control" id="csvFile" name="file" accept=".csv,text/csv">
+            </div>
+            <button type="button" class="btn btn-primary" id="stock-import">Import</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block aditional_scripts %}
+<script type="module" src="{{ url_for('imports_static', path='imports/js/script-trade-republic-csv.js') }}"></script>
+{% endblock %}
